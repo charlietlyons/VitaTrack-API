@@ -1,33 +1,43 @@
-const { logRequest } = require("../util/Logger");
+import UserService from "../service/UserService.js";
+import { logRequest, logError } from "../util/Logger.js";
 
-class UserController {
-  constructor({ userService }) {
-    this.userService = null;
+export default class UserController {
+  constructor() {
+    this.userService = new UserService();
   }
 
-  createUser(req, res) {
+  createUser = (req, res) => {
     try {
-      throw new Error("Not implemented");
-      logRequest(req.method, req.url);
-      // TODO: Create a user using the userService
-      res.send("User created");
+      this.userService.createUser(req.body, () => {
+        logRequest(req.method, req.url, 200);
+        res.send("User created");
+      }, (error) => {
+        logError(error);
+        logRequest(req.method, req.url, 500);
+        res.status(500).send();
+      });
+      
+      
     } catch (e) {
       logRequest(req.method, req.url, 500);
       res.status(500).send(e.message);
     }
   }
 
-  verifyUser(req, res) {
+  verifyUser = (req, res) => {
     try {
-      throw new Error("Not implemented");
       logRequest(req.method, req.url);
-      // Verify a user using the userService
-      res.send("User verified.");
+      this.userService.verifyUser(req.body, () => {
+        logRequest(req.method, req.url, 200);
+        res.send("someAccessToken");
+      }, (error) => {
+        logError(error);
+        logRequest(req.method, req.url, 500);
+        res.status(500).send();
+      });
     } catch (e) {
       logRequest(req.method, req.url, 500);
       res.status(500).send(e.message);
     }
   }
 }
-
-module.exports = UserController;

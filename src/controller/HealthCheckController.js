@@ -1,6 +1,8 @@
+import { logRequest } from "../util/Logger.js";
+
 const healthcheck = (req, res) => {
-  console.log("Request received: ${req.method} ${req.url}}");
+  logRequest(req.method, req.url);
   res.send("UP");
 };
 
-module.exports = { healthcheck };
+export { healthcheck };

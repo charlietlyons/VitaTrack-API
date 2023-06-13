@@ -1,14 +1,16 @@
-const express = require("express");
-const router = express.Router();
-const { healthcheck } = require("./controller/HealthCheckController");
-const UserController = require("./controller/UserController");
-require("./controller/UserController");
+import express from "express";
+import UserController from "./controller/UserController.js";
+import { healthcheck } from "./controller/HealthCheckController.js";
 
-const userController = new UserController("fish");
+const router = express.Router();
+
+const userController = new UserController();
 
 // Healthcheck
 router.get("/health-check", healthcheck);
-router.get("/user", userController.createUser);
-router.post("/user", userController.verifyUser);
 
-module.exports = router;
+// User
+router.post("/register-user", userController.createUser);
+router.post("/verify-user", userController.verifyUser);
+
+export default router;
