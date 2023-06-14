@@ -23,22 +23,27 @@ export default class MongoClient {
     logEvent("User inserted");
   }
 
-  findOne(username, successHandler) {
-    const query = { username }
-
+  findOne(username, callback) {
+    const query = { user: username };
     const options = {
       projection: { _id: 0 },
     };
 
-    this.client.db(DB_NAME).collection("user").findOne(query, options).then((user) => {
-      if (user) {
-        logEvent("User found");
-        successHandler(user)
-      } else {
-        logEvent("User not found");
-      }
-    }).catch((error) => {
-      logError(error);
-    });
+    this.client
+      .db(DB_NAME)
+      .collection("user")
+      .findOne(query, options)
+      .then((user) => {
+        if (user) {
+          logEvent("User found");
+          callback(user);
+        } else {
+          logEvent("User not found");
+          callback(null);
+        }
+      })
+      .catch((error) => {
+        logError(error);
+      });
   }
 }

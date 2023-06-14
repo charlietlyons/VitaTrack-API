@@ -12,5 +12,6 @@ router.get("/health-check", healthcheck);
 // User
 router.post("/register-user", userController.createUser);
 router.post("/verify-user", userController.verifyUser);
+router.post("/verify-token", userController.verifyToken);
 
 export default router;
