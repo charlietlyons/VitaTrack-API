@@ -1,5 +1,5 @@
 import MongoClient from "../client/MongoClient.js";
-import { logEvent } from "../util/Logger.js";
+import { logEvent, logError } from "../util/Logger.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
@@ -17,11 +17,12 @@ export default class UserService {
   createUser = (user, successHandler, failHandler) => {
     try {
       this.mongoClient.findOne(
-        user.user,
+        user.email,
         (result) => {
           if (!result) {
             bcrypt.genSalt(parseInt(HASH_SALT_ROUNDS)).then((salt) => {
               bcrypt.hash(user.password, salt).then((hash) => {
+                user.salt = salt;
                 user.password = hash;
                 this.mongoClient.insertOne(user);
                 successHandler();
@@ -42,31 +43,34 @@ export default class UserService {
 
   verifyUser = (user, successHandler, failHandler) => {
     try {
-      this.mongoClient.findOne(
-        user.user,
-        (result) => {
-          if (result) {
-            bcrypt.compare(user.password, result.password).then((match) => {
-              if (match) {
-                const token = jwt.sign(
-                  { username: user.user },
-                  ACCESS_TOKEN_SECRET,
-                  { expiresIn: "1hr" }
-                );
-                logEvent(`${user.user} logged in`);
-                successHandler(token);
-              } else {
-                failHandler("Password does not match");
-              }
-            });
-          } else {
-            failHandler("User does not exist");
+      this.mongoClient.findOne(user.email, (result) => {
+        bcrypt.hash(user.password, result.salt).then((hash) => {
+          {
+            if (result) {
+              // TODO:  I have no idea why the password don't match
+              console.log(result.password);
+              console.log(hash);
+              bcrypt
+                .compare(hash.toString(), result.password.toString())
+                .then((match) => {
+                  if (match) {
+                    const token = jwt.sign(
+                      { username: user.user },
+                      ACCESS_TOKEN_SECRET,
+                      { expiresIn: "1hr" }
+                    );
+                    logEvent(`${user.user} logged in`);
+                    successHandler(token);
+                  } else {
+                    failHandler("Password does not match");
+                  }
+                });
+            } else {
+              failHandler("User does not exist");
+            }
           }
-        },
-        (error) => {
-          failHandler(error);
-        }
-      );
+        });
+      });
     } catch (e) {
       failHandler(e);
     }
