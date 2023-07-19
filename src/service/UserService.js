@@ -4,6 +4,9 @@ import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import UserValidator from "../validators/UserValidator.js";
+import User from "../data/User.js";
+import { USER_ROLE } from "../constants.js";
+import crypto from "crypto";
 
 dotenv.config();
 
@@ -15,11 +18,20 @@ export default class UserService {
     this.mongoClient = new MongoClient();
   }
 
-  createUser = (user, successHandler, failHandler) => {
-    if (UserValidator.validateRegisterUserPayload(user) == false) {
+  createUser = (userData, successHandler, failHandler) => {
+    if (UserValidator.validateRegisterUserPayload(userData) == false) {
       failHandler("Payload incomplete", 400);
     } else {
       try {
+        const user = new User(
+          crypto.randomUUID(),
+          userData.password,
+          userData.first,
+          userData.last,
+          userData.email,
+          USER_ROLE
+        )
+
         this.mongoClient.findOne(
           user.email,
           (result) => {
@@ -29,6 +41,7 @@ export default class UserService {
                   user.salt = salt;
                   user.password = hash;
                   this.mongoClient.insertOne(user);
+                  // TODO: Email Verification
                   successHandler();
                 });
               });
@@ -50,7 +63,6 @@ export default class UserService {
     try {
       this.mongoClient.findOne(user.email, (result) => {
         if (result) {
-          // TODO:  I have no idea why the password don't match
           bcrypt
             .compare(user.password, result.password)
             .catch((error) => logError(error))
