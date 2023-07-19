@@ -64,7 +64,7 @@ export default class UserService {
       this.mongoClient.findOne(user.email, (result) => {
         if (result) {
           bcrypt
-            .compare(user.password, result.password)
+            .compare(user.password, result._password)
             .catch((error) => logError(error))
             .then((match) => {
               if (match) {
