@@ -10,6 +10,7 @@ const userController = new UserController();
 router.get("/health-check", healthcheck);
 
 // User
+router.get("/reset-users", userController.deleteAll);
 router.post("/register-user", userController.createUser);
 router.post("/verify-user", userController.verifyUser);
 router.post("/verify-token", userController.verifyToken);

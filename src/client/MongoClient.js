@@ -46,4 +46,17 @@ export default class MongoClient {
         logError(error);
       });
   }
+
+  deleteAll(callback) {
+    this.client
+      .db(DB_NAME)
+      .collection("user")
+      .deleteMany({})
+      .then((result) => {
+        logEvent(
+          "User database reset. " + result.deletedCount + " entries deleted."
+        );
+        callback();
+      });
+  }
 }
