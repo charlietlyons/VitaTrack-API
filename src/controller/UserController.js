@@ -14,10 +14,10 @@ export default class UserController {
           logRequest(req.method, req.url, 200);
           res.send("User created");
         },
-        (error) => {
+        (error, errorCode = 500) => {
           logError(error);
-          logRequest(req.method, req.url, 500);
-          res.status(500).send();
+          logRequest(req.method, req.url, errorCode);
+          res.status(errorCode).send();
         }
       );
     } catch (e) {
@@ -57,6 +57,13 @@ export default class UserController {
         logError(error);
         res.sendStatus(403);
       }
+    );
+  };
+
+  deleteAll = (req, res) => {
+    this.userService.deleteAll(
+      () => res.sendStatus(200),
+      () => res.sendStatus(500)
     );
   };
 }
