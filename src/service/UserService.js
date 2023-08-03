@@ -4,9 +4,9 @@ import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import UserValidator from "../validators/UserValidator.js";
-import User from "../data/User.js";
 import { USER_ROLE } from "../constants.js";
 import crypto from "crypto";
+import { transformUserDataToUser } from "../transformer/UserTransformer.js";
 
 dotenv.config();
 
@@ -23,34 +23,16 @@ export default class UserService {
       failHandler("Payload incomplete", 400);
     } else {
       try {
-        const user = new User(
-          crypto.randomUUID(),
-          userData.password,
-          userData.first,
-          userData.last,
-          userData.email,
-          USER_ROLE
-        )
-
+        const user = transformUserDataToUser(userData, crypto.randomUUID(), USER_ROLE);
         this.mongoClient.findOne(
           user.email,
           (result) => {
             if (!result) {
-              bcrypt.genSalt(parseInt(HASH_SALT_ROUNDS)).then((salt) => {
-                bcrypt.hash(user.password, salt).then((hash) => {
-                  user.salt = salt;
-                  user.password = hash;
-                  this.mongoClient.insertOne(user);
-                  // TODO: Email Verification
-                  successHandler();
-                });
-              });
+              this.registerHandler(user);
+              successHandler();
             } else {
               failHandler("User already exists");
             }
-          },
-          (error) => {
-            failHandler(error);
           }
         );
       } catch (e) {
@@ -63,22 +45,7 @@ export default class UserService {
     try {
       this.mongoClient.findOne(user.email, (result) => {
         if (result) {
-          bcrypt
-            .compare(user.password, result._password)
-            .catch((error) => logError(error))
-            .then((match) => {
-              if (match) {
-                const token = jwt.sign(
-                  { username: user.user },
-                  ACCESS_TOKEN_SECRET,
-                  { expiresIn: "1hr" }
-                );
-                logEvent(`${user.user} logged in`);
-                successHandler(token);
-              } else {
-                failHandler("Password does not match");
-              }
-            });
+          this.checkPasswordForToken(user, result).then((token) => successHandler(token)).catch((error) => failHandler(error));
         } else {
           failHandler("User does not exist");
         }
@@ -91,8 +58,7 @@ export default class UserService {
   verifyToken(token, successHandler, failHandler) {
     jwt.verify(token, ACCESS_TOKEN_SECRET, (error, data) => {
       if (error) {
-        logError(error);
-        failHandler();
+        failHandler(error);
       } else {
         successHandler(data);
       }
@@ -107,5 +73,32 @@ export default class UserService {
       logError(e);
       failHandler();
     }
+  }
+
+  checkPasswordForToken(user, result) {
+    return bcrypt
+      .compare(user.password, result._password)
+      .then((match) => {
+        if (match) {
+          const token = jwt.sign(
+            { username: user.user },
+            ACCESS_TOKEN_SECRET,
+            { expiresIn: "1hr" }
+          );
+          logEvent(`${user.user} logged in`);
+          return token;
+        }
+      });
+  }
+
+  registerHandler(user) {
+    bcrypt.genSalt(parseInt(HASH_SALT_ROUNDS)).then((salt) => {
+      bcrypt.hash(user.password, salt).then((hash) => {
+        user.salt = salt;
+        user.password = hash;
+        this.mongoClient.insertOne(user);
+        // TODO: Email Verification
+      });
+    });
   }
 }
