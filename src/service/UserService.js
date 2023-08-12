@@ -41,11 +41,33 @@ export default class UserService {
     }
   };
 
+  getUserDetails(user, successHandler, failHandler) {
+    try {
+      this.mongoClient.findOne(user, (result) => {
+        if (result) {
+          const accountDetails = {
+            first: result._firstName,
+            last: result._lastName,
+            email: result._email,
+            phone: result._phone,
+          }
+          successHandler(accountDetails);
+        } else {
+          failHandler("User does not exist");
+        }
+      });
+    } catch (e) {
+      failHandler(e);
+    }
+  }
+
   verifyUser(user, successHandler, failHandler) {
     try {
       this.mongoClient.findOne(user.email, (result) => {
         if (result) {
-          this.checkPasswordForToken(user, result).then((token) => successHandler(token)).catch((error) => failHandler(error));
+          this.checkPasswordForToken(user, result)
+            .then((token) => successHandler(token))
+            .catch((error) => failHandler(error));
         } else {
           failHandler("User does not exist");
         }
@@ -81,11 +103,11 @@ export default class UserService {
       .then((match) => {
         if (match) {
           const token = jwt.sign(
-            { username: user.user },
+            { email: user.email },
             ACCESS_TOKEN_SECRET,
             { expiresIn: "1hr" }
           );
-          logEvent(`${user.user} logged in`);
+          logEvent(`${user.email} logged in`);
           return token;
         }
       });

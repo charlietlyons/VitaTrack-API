@@ -23,8 +23,8 @@ export default class MongoClient {
     logEvent("User inserted");
   }
 
-  findOne(username, callback) {
-    const query = { user: username };
+  findOne(email, callback) {
+    const query = { _email: email };
     const options = {
       projection: { _id: 0 },
     };

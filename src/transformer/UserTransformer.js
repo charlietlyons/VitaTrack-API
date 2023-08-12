@@ -7,6 +7,7 @@ export function transformUserDataToUser(userData, id, role) {
         userData.first,
         userData.last,
         userData.email,
+        userData.phone,
         role
     )
 }

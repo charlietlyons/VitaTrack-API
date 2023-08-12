@@ -10,54 +10,51 @@ export default class UserController {
     try {
       this.userService.createUser(
         req.body,
-        () => {
-          logRequest(req.method, req.url, 200);
-          res.send("User created");
-        },
-        (error, errorCode = 500) => {
-          logError(error);
-          logRequest(req.method, req.url, errorCode);
-          res.status(errorCode).send();
-        }
+        () => this.successHandler(req, res, "User created"),
+        (error) => this.failHandler(req, res, error, 500)
       );
     } catch (e) {
-      logRequest(req.method, req.url, 500);
-      res.status(500).send(e.message);
+      this.failHandler(req, res, e, 500);
     }
   };
 
+  getUserDetails = (req, res, data) => {
+    try {
+      this.userService.getUserDetails(
+        data.email,
+        (result) => this.successHandler(req, res, result),
+        (error) => this.failHandler(req, res, error, 403)
+      );
+    } catch (e) {
+      this.failHandler(req, res, e, 500);
+    }
+  };
+
+  // TODO: have this return JUST the token and not the whole JS object
   verifyUser = (req, res) => {
     try {
       logRequest(req.method, req.url);
       this.userService.verifyUser(
         req.body,
-        (token) => {
-          logRequest(req.method, req.url, 200);
-          res.send(JSON.stringify({ token: token }));
-        },
-        (error) => {
-          logError(error);
-          logRequest(req.method, req.url, 500);
-          res.status(500).send();
-        }
+        (token) =>
+          this.successHandler(req, res, JSON.stringify({ token: token })),
+        (error) => this.failHandler(req, res, error, 403)
       );
     } catch (e) {
-      logRequest(req.method, req.url, 500);
-      res.status(500).send(e.message);
+      this.failHandler(req, res, e, 500);
     }
   };
 
   verifyToken = (req, res) => {
-    this.userService.verifyToken(
-      req.body.token,
-      (result) => {
-        res.send(result);
-      },
-      (error) => {
-        logError(error);
-        res.sendStatus(403);
-      }
-    );
+    try {
+      this.userService.verifyToken(
+        req.body.token,
+        (result) => res.send(result),
+        (error) => this.failHandler(req, res, error, 403)
+      );
+    } catch (e) {
+      this.failHandler(req, res, e, 500);
+    }
   };
 
   deleteAll = (req, res) => {
@@ -65,5 +62,16 @@ export default class UserController {
       () => res.sendStatus(200),
       () => res.sendStatus(500)
     );
+  };
+
+  successHandler = (req, res, payload = {}) => {
+    logRequest(req.method, req.url, 200);
+    res.send(payload);
+  };
+
+  failHandler = (req, res, error, errorCode) => {
+    logRequest(req.method, req.url, errorCode);
+    logError(error);
+    res.status(errorCode).send();
   };
 }

@@ -1,10 +1,11 @@
 class User {
-  constructor(id, password, firstName, lastName, email, role) {
+  constructor(id, password, firstName, lastName, email, phone, role) {
     this._id = id;
     this._password = password;
     this._firstName = firstName;
     this._lastName = lastName;
     this._email = email;
+    this._phone = phone;
     this._salt = null;
     this._role = role;
   }
@@ -47,6 +48,14 @@ class User {
 
   set email(value) {
     this._email = value;
+  }
+
+  get phone() {
+    return this._phone;
+  }
+
+  set phone(value) {
+    this._phone = value;
   }
 
   get salt() {
