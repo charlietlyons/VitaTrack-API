@@ -1,9 +1,11 @@
 import UserService from "../service/UserService.js";
+import DailyLogService from "../service/DailyLogService.js";
 import { logRequest, logError } from "../util/Logger.js";
 
 export default class UserController {
   constructor() {
     this.userService = new UserService();
+    this.dailyLogService = new DailyLogService();
   }
 
   createUser = (req, res) => {
@@ -36,8 +38,10 @@ export default class UserController {
       logRequest(req.method, req.url);
       this.userService.verifyUser(
         req.body,
-        (token) =>
-          this.successHandler(req, res, JSON.stringify({ token: token })),
+        (token) => {
+          this.dailyLogService.prepareDailyLog(req.body.email);
+          this.successHandler(req, res, JSON.stringify({ token: token }));
+        },
         (error) => this.failHandler(req, res, error, 403)
       );
     } catch (e) {

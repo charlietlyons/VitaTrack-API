@@ -23,18 +23,19 @@ export default class UserService {
       failHandler("Payload incomplete", 400);
     } else {
       try {
-        const user = transformUserDataToUser(userData, crypto.randomUUID(), USER_ROLE);
-        this.mongoClient.findOne(
-          user.email,
-          (result) => {
-            if (!result) {
-              this.registerHandler(user);
-              successHandler();
-            } else {
-              failHandler("User already exists");
-            }
-          }
+        const user = transformUserDataToUser(
+          userData,
+          crypto.randomUUID(),
+          USER_ROLE
         );
+        this.mongoClient.findUser(user.email, (result) => {
+          if (!result) {
+            this.registerHandler(user);
+            successHandler();
+          } else {
+            failHandler("User already exists");
+          }
+        });
       } catch (e) {
         failHandler(e);
       }
@@ -43,14 +44,14 @@ export default class UserService {
 
   getUserDetails(user, successHandler, failHandler) {
     try {
-      this.mongoClient.findOne(user, (result) => {
+      this.mongoClient.findUser(user, (result) => {
         if (result) {
           const accountDetails = {
             first: result._firstName,
             last: result._lastName,
             email: result._email,
             phone: result._phone,
-          }
+          };
           successHandler(accountDetails);
         } else {
           failHandler("User does not exist");
@@ -63,7 +64,7 @@ export default class UserService {
 
   verifyUser(user, successHandler, failHandler) {
     try {
-      this.mongoClient.findOne(user.email, (result) => {
+      this.mongoClient.findUser(user.email, (result) => {
         if (result) {
           this.checkPasswordForToken(user, result)
             .then((token) => successHandler(token))
@@ -90,7 +91,7 @@ export default class UserService {
   // TODO: get rid of this when you have live data
   deleteAll(successHandler, failHandler) {
     try {
-      this.mongoClient.deleteAll(successHandler);
+      this.mongoClient.deleteAllUsers(successHandler);
     } catch (e) {
       logError(e);
       failHandler();
@@ -98,19 +99,15 @@ export default class UserService {
   }
 
   checkPasswordForToken(user, result) {
-    return bcrypt
-      .compare(user.password, result._password)
-      .then((match) => {
-        if (match) {
-          const token = jwt.sign(
-            { email: user.email },
-            ACCESS_TOKEN_SECRET,
-            { expiresIn: "1hr" }
-          );
-          logEvent(`${user.email} logged in`);
-          return token;
-        }
-      });
+    return bcrypt.compare(user.password, result._password).then((match) => {
+      if (match) {
+        const token = jwt.sign({ email: user.email }, ACCESS_TOKEN_SECRET, {
+          expiresIn: "1hr",
+        });
+        logEvent(`${user.email} logged in`);
+        return token;
+      }
+    });
   }
 
   registerHandler(user) {
@@ -118,7 +115,7 @@ export default class UserService {
       bcrypt.hash(user.password, salt).then((hash) => {
         user.salt = salt;
         user.password = hash;
-        this.mongoClient.insertOne(user);
+        this.mongoClient.insertUser(user);
         // TODO: Email Verification
       });
     });

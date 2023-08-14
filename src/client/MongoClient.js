@@ -18,21 +18,40 @@ export default class MongoClient {
     });
   }
 
-  insertOne(user) {
+  insertUser(user) {
     this.client.db(DB_NAME).collection("user").insertOne(user);
     logEvent("User inserted");
   }
 
-  findOne(email, callback) {
+  insertDailyLog(dailyLog) {
+    this.client.db(DB_NAME).collection("daystat").insertOne(dailyLog);
+    logEvent("Daily log inserted");
+  }
+
+  getDailyLog(userId, date, callback) {
+    const query = { userId: userId, date: date };
+
+    this.client
+      .db(DB_NAME)
+      .collection("daystat")
+      .findOne(query)
+      .then((result) => {
+        if (result) {
+          logEvent("Daily log found");
+        } else {
+          logEvent("Daily log not found");
+          callback();
+        }
+      });
+  }
+
+  findUser(email, callback) {
     const query = { _email: email };
-    const options = {
-      projection: { _id: 0 },
-    };
 
     this.client
       .db(DB_NAME)
       .collection("user")
-      .findOne(query, options)
+      .findOne(query)
       .then((user) => {
         if (user) {
           logEvent("User found");
@@ -47,7 +66,7 @@ export default class MongoClient {
       });
   }
 
-  deleteAll(callback) {
+  deleteAllUsers(callback) {
     this.client
       .db(DB_NAME)
       .collection("user")
