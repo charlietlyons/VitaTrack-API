@@ -33,7 +33,7 @@ export default class MongoClient {
     logEvent("Intake inserted");
   }
 
-  getDailyLog(userId, date, callback) {
+  getDailyLog(userId, date, foundCallback, notFoundCallback) {
     const query = { userId: userId, date: date };
 
     this.client
@@ -43,10 +43,10 @@ export default class MongoClient {
       .then((result) => {
         if (result) {
           logEvent("Daily log found");
+          foundCallback(result);
         } else {
-          logEvent("Daily log not found");
+          notFoundCallback(result);
         }
-        callback(result);
       });
   }
 

@@ -38,8 +38,13 @@ export default class UserController {
       this.userService.verifyUser(
         req.body,
         (token) => {
-          this.dailyLogService.prepareDailyLog(req.body.email);
-          this.successHandler(req, res, JSON.stringify({ token: token }));
+          this.dailyLogService.prepareDailyLog(
+            req.body.email,
+            () => {
+              this.successHandler(req, res, JSON.stringify({ token: token }));
+            },
+            () => res.sendStatus(500)
+          );
         },
         (error) => this.failHandler(req, res, error, 403)
       );

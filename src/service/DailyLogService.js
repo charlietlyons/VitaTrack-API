@@ -1,31 +1,39 @@
 import MongoClient from "../client/MongoClient.js";
 import crypto from "crypto";
+import { logError, logEvent } from "../util/Logger.js";
 
 class DailyLogService {
   constructor() {
     this.mongoClient = new MongoClient();
   }
 
-  prepareDailyLog(user) {
+  prepareDailyLog(user, successHandler) {
     this.mongoClient.findUser(user, (result) => {
+      const today = new Date().toJSON().slice(0, 10);
+
       if (result) {
-        const now = new Date().toJSON().slice(0, 10);
         const dailyLogInitialPayload = {
           _id: crypto.randomUUID(),
-          date: now,
+          date: today,
           userId: result._id,
           notes: "",
         };
 
-        this.mongoClient.getDailyLog(result._id, now, () =>
-          this.mongoClient.insertDailyLog(dailyLogInitialPayload)
+        this.mongoClient.getDailyLog(
+          result._id,
+          today,
+          () => {
+            logEvent("Daily Log retrieved successfully.");
+            successHandler();
+          },
+          () => {
+            logError("Could not retrieve Daily Log. Preparing a new one...");
+            this.mongoClient.insertDailyLog(dailyLogInitialPayload);
+            successHandler();
+          }
         );
       }
     });
-  }
-
-  getDailyLog(userId, callback) {
-    this.mongoClient.getDailyLog(userId, new Date().toJSON().slice(0, 10), callback);
   }
 }
 
