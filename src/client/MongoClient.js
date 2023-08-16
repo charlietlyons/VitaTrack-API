@@ -25,7 +25,12 @@ export default class MongoClient {
 
   insertDailyLog(dailyLog) {
     this.client.db(DB_NAME).collection("daystat").insertOne(dailyLog);
-    logEvent("Daily log inserted");
+    logEvent("Daily Log inserted");
+  }
+
+  insertIntake(intake) {
+    this.client.db(DB_NAME).collection("intake").insertOne(intake);
+    logEvent("Intake inserted");
   }
 
   getDailyLog(userId, date, callback) {
@@ -40,8 +45,8 @@ export default class MongoClient {
           logEvent("Daily log found");
         } else {
           logEvent("Daily log not found");
-          callback();
         }
+        callback(result);
       });
   }
 

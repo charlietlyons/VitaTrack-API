@@ -1,5 +1,6 @@
 import express from "express";
 import UserController from "./controller/UserController.js";
+import IntakeController from "./controller/IntakeController.js";
 import { healthcheck } from "./controller/HealthCheckController.js";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
@@ -12,6 +13,7 @@ const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 const router = express.Router();
 
 const userController = new UserController();
+const intakeController = new IntakeController();
 
 function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -50,5 +52,9 @@ router.get("/account-details", (req, res) =>
 router.post("/register-user", userController.createUser);
 router.post("/verify-user", userController.verifyUser);
 router.post("/verify-token", userController.verifyToken);
+
+router.post("/add-intake", (req, res) => {
+    authenticate(req, res, intakeController.addIntake);
+})
 
 export default router;

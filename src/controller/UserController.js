@@ -35,7 +35,6 @@ export default class UserController {
   // TODO: have this return JUST the token and not the whole JS object
   verifyUser = (req, res) => {
     try {
-      logRequest(req.method, req.url);
       this.userService.verifyUser(
         req.body,
         (token) => {
