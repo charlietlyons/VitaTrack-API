@@ -53,8 +53,11 @@ router.post("/register-user", userController.createUser);
 router.post("/verify-user", userController.verifyUser);
 router.post("/verify-token", userController.verifyToken);
 
+router.get("/intake" , (req, res) => {
+  authenticate(req, res, intakeController.getIntake);
+});
 router.post("/add-intake", (req, res) => {
-    authenticate(req, res, intakeController.addIntake);
+  authenticate(req, res, intakeController.addIntake);
 })
 
 export default router;

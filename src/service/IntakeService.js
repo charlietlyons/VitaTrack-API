@@ -6,6 +6,27 @@ export default class IntakeService {
     this.mongoClient = new MongoClient();
   }
 
+  getUserIntake(userId, date, successHandler, failHandler) {
+    this.mongoClient.findUser(userId, (user) => {
+      if (user) {
+        this.mongoClient.getDailyLog(
+          user._id,
+          date,
+          (dailyLog) => {
+            if (dailyLog) {
+              this.mongoClient.getUserIntake(user._id, dailyLog._id, successHandler, failHandler)
+            } else {
+              failHandler();
+            }
+          },
+          failHandler
+        );
+      } else {
+        failHandler();
+      }
+    });
+  }
+
   addIntake(intake, successHandler, failHandler) {
     this.mongoClient.findUser(intake.email, (result) => {
       if (result) {

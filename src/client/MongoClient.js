@@ -33,6 +33,18 @@ export default class MongoClient {
     logEvent("Intake inserted");
   }
 
+  getUserIntake(userId, dayId, foundCallback, notFoundCallback) {
+    const query = { dayId: dayId, userId: userId }
+    this.client.db(DB_NAME).collection("intake").find(query).toArray().then((result) => {
+      if (result.length > 0) {
+        logEvent("Intake found");
+        foundCallback(result);
+      } else {
+        notFoundCallback();
+      }
+    });
+  }
+
   getDailyLog(userId, date, foundCallback, notFoundCallback) {
     const query = { userId: userId, date: date };
 
@@ -45,6 +57,7 @@ export default class MongoClient {
           logEvent("Daily log found");
           foundCallback(result);
         } else {
+          logEvent("Daily log not found");
           notFoundCallback(result);
         }
       });

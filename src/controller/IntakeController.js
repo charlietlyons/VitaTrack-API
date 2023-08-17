@@ -5,6 +5,16 @@ export default class IntakeController {
   constructor() {
     this.intakeService = new IntakeService();
     this.addIntake = this.addIntake.bind(this);
+    this.getIntake = this.getIntake.bind(this);
+  }
+
+  getIntake(req, res, data) {
+    try {
+      this.intakeService.getUserIntake(data.email, req.query.date, (result) => res.send(result), () => res.status(404).send());
+    } catch (error) {
+      logError(error);
+      res.status(500).send(error);
+    }
   }
 
   addIntake(req, res, data) {
