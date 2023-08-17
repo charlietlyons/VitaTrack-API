@@ -14,7 +14,31 @@ export default class IntakeService {
           date,
           (dailyLog) => {
             if (dailyLog) {
-              this.mongoClient.getUserIntake(user._id, dailyLog._id, successHandler, failHandler)
+              this.mongoClient.getUserIntake(user._id, dailyLog._id, (result) => {
+                // TODO: pull food data from DB
+                const payload = []
+
+                result.forEach((intake) => {
+                  payload.push({
+                    _id: intake._id,
+                    userId: user._id,
+                    quantity: intake.quantity,
+                    name: "Banana",
+                    description: "A banana",
+                    calories: 100,
+                    protein: 10,
+                    carbs: 10,
+                    fat: 10,
+                    servingSize: 100,
+                    serving_unit: "g",
+                    imgUrl: "",
+                    userId: "admin",
+                    isCustom: true,
+                    isPrivate: false
+                  });
+                });
+                successHandler(payload);
+              }, failHandler)
             } else {
               failHandler();
             }
