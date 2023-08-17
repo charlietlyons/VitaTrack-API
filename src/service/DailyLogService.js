@@ -12,12 +12,12 @@ class DailyLogService {
       const today = new Date().toJSON().slice(0, 10);
 
       if (result) {
-        const dailyLogInitialPayload = {
-          _id: crypto.randomUUID(),
-          date: today,
-          userId: result._id,
-          notes: "",
-        };
+        const dailyLogInitialPayload = new DailyLogService(
+          crypto.randomUUID(),
+          today,
+          result._id,
+          "",
+        );
 
         this.mongoClient.getDailyLog(
           result._id,

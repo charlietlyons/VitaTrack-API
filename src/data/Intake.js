@@ -1,13 +1,9 @@
-class Intake {
-  constructor(
-    id,
-    dayId,
-    foodId,
-    quanity
-  ) {
-    this.id = id;
+export default class Intake {
+  constructor(id, userId, dayId, foodId, quantity) {
+    this._id = id;
+    this.userId = userId;
     this.dayId = dayId;
     this.foodId = foodId;
-    this.quanity = quanity;
+    this.quantity = quantity;
   }
 }

@@ -45,6 +45,11 @@ export default class MongoClient {
     });
   }
 
+  // TODO: look into chaining this garbage together
+  insertFood(food) {
+    this.client.db(DB_NAME).collection("food").insertOne(food)
+  }
+
   getDailyLog(userId, date, foundCallback, notFoundCallback) {
     const query = { userId: userId, date: date };
 

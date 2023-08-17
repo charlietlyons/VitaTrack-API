@@ -1,4 +1,4 @@
-class Food {
+export default class Food {
   constructor(
     id,
     name,
@@ -9,7 +9,7 @@ class Food {
     servingSize,
     servingUnit
   ) {
-    this.id = id;
+    this._id = id;
     this.name = name;
     this.calories = calories;
     this.protein = protein;

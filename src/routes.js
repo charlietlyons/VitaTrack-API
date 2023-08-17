@@ -2,6 +2,7 @@ import express from "express";
 import UserController from "./controller/UserController.js";
 import IntakeController from "./controller/IntakeController.js";
 import { healthcheck } from "./controller/HealthCheckController.js";
+import FoodController from "./controller/FoodController.js";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import { logError } from "./util/Logger.js";
@@ -12,8 +13,9 @@ const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 const router = express.Router();
 
-const userController = new UserController();
+const userController =new UserController();
 const intakeController = new IntakeController();
+const foodController = new FoodController();
 
 function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -35,12 +37,17 @@ function authenticate(req, res, next) {
     });
   } catch (error) {
     logError("Invalid token");
-    return res.status(403).send("Invalid token");
+    return res.status(403).send(error);
   }
 }
 
 // Healthcheck
 router.get("/health-check", healthcheck);
+
+// Food
+router.post("/food", (req, res) => {
+  authenticate(req, res, foodController.addFood)
+});
 
 // User
 router.get("/reset-users", (req, res) =>
@@ -53,6 +60,7 @@ router.post("/register-user", userController.createUser);
 router.post("/verify-user", userController.verifyUser);
 router.post("/verify-token", userController.verifyToken);
 
+// Intake
 router.get("/intake" , (req, res) => {
   authenticate(req, res, intakeController.getIntake);
 });
