@@ -1,64 +1,66 @@
-import { expect } from '@jest/globals';
-import MongoClient from '../../client/MongoClient';
-import FoodService from '../../service/FoodService';
-import FoodController from './FoodController';
-import { logError } from '../../util/Logger';
+import { expect } from "@jest/globals";
+import MongoClient from "../../client/MongoClient/MongoClient";
+import FoodService from "../../service/FoodService";
+import FoodController from "./FoodController";
+import { logError } from "../../util/Logger";
 
-jest.mock('../../util/Logger.js', () => ({
-  logError: jest.fn()
+jest.mock("../../util/Logger.js", () => ({
+  logError: jest.fn(),
 }));
 
-describe('FoodController', () => {
-    it("should call food service to add new food", () => {
-        const mongoClient = new MongoClient();
-        const foodService = new FoodService(mongoClient);
+describe("FoodController", () => {
+  it("should call food service to add new food", () => {
+    const mongoClient = new MongoClient();
+    const foodService = new FoodService(mongoClient);
 
-        const payload = {
-            name: "gross food",
-            calories: 100,
-            protein: 10,
-            carbs: 10,
-            fat: 10,
-            servingSize: 100,
-            servingUnit: "g"
-        }
-        const  mockAddFood = jest.fn();
-        
-        foodService.addFood = mockAddFood;
+    const payload = {
+      name: "gross food",
+      calories: 100,
+      protein: 10,
+      carbs: 10,
+      fat: 10,
+      servingSize: 100,
+      servingUnit: "g",
+    };
+    const mockAddFood = jest.fn();
 
-        const foodController = new FoodController(foodService);
+    foodService.addFood = mockAddFood;
 
-        foodController.addFood({body: payload});
+    const foodController = new FoodController(foodService);
 
-        expect(mockAddFood).toHaveBeenCalledWith(payload);
-        expect(foodController).toBeDefined();
-        expect(mockAddFood).toHaveBeenCalledTimes(1);
-        expect(logError).not.toHaveBeenCalled();
-    })
+    foodController.addFood({ body: payload });
 
-    it("should call logError when food service throws an error", () => {
-        const mongoClient = new MongoClient();
-        const foodService = new FoodService(mongoClient);
+    expect(mockAddFood).toHaveBeenCalledWith(payload);
+    expect(foodController).toBeDefined();
+    expect(mockAddFood).toHaveBeenCalledTimes(1);
+    expect(logError).not.toHaveBeenCalled();
+  });
 
-        const payload = {
-            name: "gross food",
-            calories: 100,
-            protein: 10,
-            carbs: 10,
-            fat: 10,
-            servingSize: 100,
-            servingUnit: "g"
-        }
-        const mockAddFood = jest.fn().mockImplementation(() => { throw Error("hate this food") });
-        
-        foodService.addFood = mockAddFood;
+  it("should call logError when food service throws an error", () => {
+    const mongoClient = new MongoClient();
+    const foodService = new FoodService(mongoClient);
 
-        const foodController = new FoodController(foodService);
-
-        foodController.addFood({body: payload});
-
-        expect(mockAddFood).toHaveBeenCalledWith(payload);
-        expect(foodController).toBeDefined();
-        expect(logError).toHaveBeenCalledTimes(1);
+    const payload = {
+      name: "gross food",
+      calories: 100,
+      protein: 10,
+      carbs: 10,
+      fat: 10,
+      servingSize: 100,
+      servingUnit: "g",
+    };
+    const mockAddFood = jest.fn().mockImplementation(() => {
+      throw Error("hate this food");
     });
+
+    foodService.addFood = mockAddFood;
+
+    const foodController = new FoodController(foodService);
+
+    foodController.addFood({ body: payload });
+
+    expect(mockAddFood).toHaveBeenCalledWith(payload);
+    expect(foodController).toBeDefined();
+    expect(logError).toHaveBeenCalledTimes(1);
+  });
 });

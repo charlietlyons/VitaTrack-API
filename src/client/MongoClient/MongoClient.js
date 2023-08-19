@@ -1,6 +1,6 @@
 import { MongoClient as MongoClientInstance } from "mongodb";
 import dotenv from "dotenv";
-import { logEvent, logError } from "../util/Logger.js";
+import { logEvent, logError } from "../../util/Logger.js";
 
 dotenv.config();
 
