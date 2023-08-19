@@ -1,12 +1,11 @@
-import MongoClient from "../client/MongoClient.js";
 import Food from "../data/Food.js";
 
 class FoodService {
-  constructor() {
-    this.client = new MongoClient();
+  constructor(mongoClient) {
+    this.mongoClient = mongoClient;
   }
 
-  addFood(food) {
+  addFood(food, callback) {
     const foodEntity = new Food(
       crypto.randomUUID(),
       food.name,
@@ -19,6 +18,7 @@ class FoodService {
     );
 
     this.client.insertFood(foodEntity);
+    callback();
   }
 }
 

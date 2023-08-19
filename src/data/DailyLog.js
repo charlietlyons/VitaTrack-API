@@ -1,5 +1,5 @@
-export default class DayStat {
-  constructor(id, date, notes) {
+export default class DailyLog {
+  constructor(id, date, userId, notes) {
     this.id = id;
     this.date = date;
     this.userId = userId;

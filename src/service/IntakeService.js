@@ -1,10 +1,9 @@
-import MongoClient from "../client/MongoClient.js";
 import crypto from "crypto";
 import Intake from "../data/Intake.js";
 
 export default class IntakeService {
-  constructor() {
-    this.mongoClient = new MongoClient();
+  constructor(mongoClient) {
+    this.mongoClient = mongoClient;
   }
 
   getUserIntake(userId, date, successHandler, failHandler) {

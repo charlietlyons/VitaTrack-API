@@ -3,9 +3,9 @@ import DailyLogService from "../service/DailyLogService.js";
 import { logRequest, logError } from "../util/Logger.js";
 
 export default class UserController {
-  constructor() {
-    this.userService = new UserService();
-    this.dailyLogService = new DailyLogService();
+  constructor(userService, dailyLogService) {
+    this.userService = userService;
+    this.dailyLogService = dailyLogService;
   }
 
   createUser = (req, res) => {

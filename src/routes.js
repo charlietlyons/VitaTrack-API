@@ -1,8 +1,13 @@
 import express from "express";
 import UserController from "./controller/UserController.js";
-import IntakeController from "./controller/IntakeController.js";
+import IntakeController from "./controller/IntakeController/IntakeController.js";
+import FoodController from "./controller/FoodController/FoodController.js";
+import MongoClient from "./client/MongoClient.js";
+import UserService from "./service/UserService.js";
+import DailyLogService from "./service/DailyLogService.js";
+import FoodService from "./service/FoodService.js";
+import IntakeService from "./service/IntakeService.js";
 import { healthcheck } from "./controller/HealthCheckController.js";
-import FoodController from "./controller/FoodController.js";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import { logError } from "./util/Logger.js";
@@ -13,9 +18,14 @@ const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 const router = express.Router();
 
-const userController =new UserController();
-const intakeController = new IntakeController();
-const foodController = new FoodController();
+const mongoClient = new MongoClient();
+const userService = new UserService(mongoClient);
+const dailyLogService = new DailyLogService(mongoClient);
+const foodService = new FoodService(mongoClient);
+const intakeService = new IntakeService(mongoClient);
+const userController =new UserController(userService, dailyLogService);
+const intakeController = new IntakeController(intakeService);
+const foodController = new FoodController(foodService);
 
 function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;

@@ -1,4 +1,3 @@
-import MongoClient from "../client/MongoClient.js";
 import { logEvent, logError } from "../util/Logger.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
@@ -14,8 +13,8 @@ const HASH_SALT_ROUNDS = process.env.HASH_SALT_ROUNDS;
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 export default class UserService {
-  constructor() {
-    this.mongoClient = new MongoClient();
+  constructor(mongoClient) {
+    this.mongoClient = mongoClient;
   }
 
   createUser = (userData, successHandler, failHandler) => {

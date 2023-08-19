@@ -1,10 +1,10 @@
-import MongoClient from "../client/MongoClient.js";
 import crypto from "crypto";
 import { logError, logEvent } from "../util/Logger.js";
+import DailyLog from "../data/DailyLog.js";
 
 class DailyLogService {
-  constructor() {
-    this.mongoClient = new MongoClient();
+  constructor(mongoClient) {
+    this.mongoClient = mongoClient;
   }
 
   prepareDailyLog(user, successHandler) {
@@ -12,7 +12,7 @@ class DailyLogService {
       const today = new Date().toJSON().slice(0, 10);
 
       if (result) {
-        const dailyLogInitialPayload = new DailyLogService(
+        const dailyLogInitialPayload = new DailyLog(
           crypto.randomUUID(),
           today,
           result._id,

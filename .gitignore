@@ -1,4 +1,5 @@
 .env
 *secret*
 /node_modules
+**/coverage
 *package-lock.json
