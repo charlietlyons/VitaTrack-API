@@ -1,11 +1,11 @@
-import { logEvent, logError } from "../util/Logger.js";
+import { logEvent, logError } from "../../util/Logger.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import UserValidator from "../validators/UserValidator.js";
-import { USER_ROLE } from "../constants.js";
+import UserValidator from "../../validators/UserValidator.js";
+import { USER_ROLE } from "../../constants.js";
 import crypto from "crypto";
-import { transformUserDataToUser } from "../transformer/UserTransformer.js";
+import { transformUserDataToUser } from "../../transformer/UserTransformer.js";
 
 dotenv.config();
 

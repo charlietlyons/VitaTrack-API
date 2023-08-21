@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import Intake from "../data/Intake.js";
+import Intake from "../../data/Intake.js";
 
 export default class IntakeService {
   constructor(mongoClient) {

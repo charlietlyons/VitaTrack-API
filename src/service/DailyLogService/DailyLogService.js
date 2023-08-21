@@ -1,14 +1,14 @@
 import crypto from "crypto";
-import { logError, logEvent } from "../util/Logger.js";
-import DailyLog from "../data/DailyLog.js";
+import { logError, logEvent } from "../../util/Logger.js";
+import DailyLog from "../../data/DailyLog.js";
 
 class DailyLogService {
   constructor(mongoClient) {
     this.mongoClient = mongoClient;
   }
 
-  prepareDailyLog(user, successHandler) {
-    this.mongoClient.findUser(user, (result) => {
+  prepareDailyLog(user, callback) {
+    this.mongoClient.getUser(user, (result) => {
       const today = new Date().toJSON().slice(0, 10);
 
       if (result) {
@@ -16,7 +16,7 @@ class DailyLogService {
           crypto.randomUUID(),
           today,
           result._id,
-          "",
+          ""
         );
 
         this.mongoClient.getDailyLog(
@@ -24,12 +24,12 @@ class DailyLogService {
           today,
           () => {
             logEvent("Daily Log retrieved successfully.");
-            successHandler();
+            callback();
           },
           () => {
-            logError("Could not retrieve Daily Log. Preparing a new one...");
+            logEvent("Could not retrieve Daily Log. Preparing a new one...");
             this.mongoClient.insertDailyLog(dailyLogInitialPayload);
-            successHandler();
+            callback();
           }
         );
       }

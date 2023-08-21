@@ -1,6 +1,4 @@
-import UserService from "../service/UserService.js";
-import DailyLogService from "../service/DailyLogService.js";
-import { logRequest, logError } from "../util/Logger.js";
+import { logRequest, logError } from "../../util/Logger.js";
 
 export default class UserController {
   constructor(userService, dailyLogService) {
@@ -43,7 +41,7 @@ export default class UserController {
             () => {
               this.successHandler(req, res, JSON.stringify({ token: token }));
             },
-            () => res.sendStatus(500)
+            () => this.failHandler(req, res, "Log already exists", 500)
           );
         },
         (error) => this.failHandler(req, res, error, 403)
@@ -57,7 +55,7 @@ export default class UserController {
     try {
       this.userService.verifyToken(
         req.body.token,
-        (result) => res.send(result),
+        (result) => this.successHandler(result),
         (error) => this.failHandler(req, res, error, 403)
       );
     } catch (e) {
@@ -72,7 +70,7 @@ export default class UserController {
     );
   };
 
-  successHandler = (req, res, payload = {}) => {
+  successHandler = (req, res, payload) => {
     logRequest(req.method, req.url, 200);
     res.send(payload);
   };

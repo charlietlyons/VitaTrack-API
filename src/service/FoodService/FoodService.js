@@ -1,4 +1,5 @@
-import Food from "../data/Food.js";
+import Food from "../../data/Food.js";
+import crypto from "crypto";
 
 class FoodService {
   constructor(mongoClient) {
@@ -17,7 +18,7 @@ class FoodService {
       food.servingUnit
     );
 
-    this.client.insertFood(foodEntity);
+    this.mongoClient.insertFood(foodEntity);
     callback();
   }
 }

@@ -1,6 +1,6 @@
 import { expect } from "@jest/globals";
 import MongoClient from "../../client/MongoClient/MongoClient";
-import FoodService from "../../service/FoodService";
+import FoodService from "../../service/FoodService/FoodService";
 import FoodController from "./FoodController";
 import { logError } from "../../util/Logger";
 
