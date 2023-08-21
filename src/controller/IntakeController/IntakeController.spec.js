@@ -10,6 +10,7 @@ describe("IntakeController", () => {
   let intakeController;
 
   beforeEach(() => {
+    jest.resetAllMocks();
     intakeService = jest.mock("../../service/IntakeService/IntakeService");
   });
 

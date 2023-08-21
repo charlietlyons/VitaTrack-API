@@ -8,10 +8,11 @@ class DailyLogService {
   }
 
   prepareDailyLog(user, callback) {
-    this.mongoClient.getUser(user, (result) => {
-      const today = new Date().toJSON().slice(0, 10);
+    this.mongoClient.getUser(
+      user,
+      (result) => {
+        const today = new Date().toJSON().slice(0, 10);
 
-      if (result) {
         const dailyLogInitialPayload = new DailyLog(
           crypto.randomUUID(),
           today,
@@ -32,8 +33,12 @@ class DailyLogService {
             callback();
           }
         );
+      },
+      () => {
+        logError("Could not retrieve user.");
+        callback();
       }
-    });
+    );
   }
 }
 

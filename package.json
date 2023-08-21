@@ -15,11 +15,15 @@
   "scripts": {
     "start": "nodemon server.js",
     "test": "jest --watchAll --verbose",
-    "test:coverage": "jest --watchAll --coverage --collectCoverageFrom=\"./src/**\"",
+    "test:coverage": "jest --watchAll --coverage",
     "test:cache": "jest --clearCache"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "resetMocks": true,
+    "collectCoverageFrom": [
+      "./src/**"
+    ]
   },
   "author": "Charlotte Lyons",
   "license": "ISC",

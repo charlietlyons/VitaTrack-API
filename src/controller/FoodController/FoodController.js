@@ -7,12 +7,13 @@ class FoodController {
   }
 
   addFood(req, res) {
-    try{
+    try {
       this.foodService.addFood(req.body);
-    } catch(error) {
-      logError(error)
+      res.send();
+    } catch (error) {
+      logError(error);
+      res.send(500);
     }
-    
   }
 }
 

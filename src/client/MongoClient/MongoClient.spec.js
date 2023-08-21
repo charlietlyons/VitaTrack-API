@@ -53,7 +53,8 @@ describe("MongoClient", () => {
 
     it("should return user through callback if present", async () => {
       const mockRecord = "a user if you can believe it";
-      const callbackMock = jest.fn();
+      const successCallbackMock = jest.fn();
+      const failCallbackMock = jest.fn();
 
       MongoClientInstance.mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(true),
@@ -66,15 +67,21 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      await mongoClient.getUser("someUserId", callbackMock);
+      await mongoClient.getUser(
+        "someUserId",
+        successCallbackMock,
+        failCallbackMock
+      );
 
-      expect(callbackMock).toHaveBeenCalledWith(mockRecord);
+      expect(successCallbackMock).toHaveBeenCalledWith(mockRecord);
+      expect(failCallbackMock).not.toHaveBeenCalled();
       expect(logEvent).toHaveBeenCalledWith("User found");
       expect(logEvent).not.toHaveBeenCalledWith("User not found");
     });
 
-    it("should return null through callback if NOT present", async () => {
-      const callbackMock = jest.fn();
+    it("should call fail callback if NOT present", async () => {
+      const successCallbackMock = jest.fn();
+      const failCallbackMock = jest.fn();
 
       MongoClientInstance.mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(true),
@@ -87,9 +94,14 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      await mongoClient.getUser("someUserId", callbackMock);
+      await mongoClient.getUser(
+        "someUserId",
+        successCallbackMock,
+        failCallbackMock
+      );
 
-      expect(callbackMock).toHaveBeenCalledWith(null);
+      expect(failCallbackMock).toHaveBeenCalled();
+      expect(successCallbackMock).not.toHaveBeenCalled();
       expect(logEvent).toHaveBeenCalledWith("User not found");
       expect(logEvent).not.toHaveBeenCalledWith("User found");
     });

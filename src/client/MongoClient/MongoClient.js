@@ -74,7 +74,7 @@ export default class MongoClient {
       });
   }
 
-  getUser(email, callback) {
+  getUser(email, successCallback, failCallback) {
     const query = { _email: email };
 
     this.client
@@ -84,10 +84,10 @@ export default class MongoClient {
       .then((user) => {
         if (user) {
           logEvent("User found");
-          callback(user);
+          successCallback(user);
         } else {
           logEvent("User not found");
-          callback(null);
+          failCallback();
         }
       });
   }

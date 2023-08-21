@@ -1,6 +1,6 @@
 import MongoClient from "../../client/MongoClient/MongoClient";
 import DailyLog from "../../data/DailyLog";
-import { logEvent } from "../../util/Logger";
+import { logError, logEvent } from "../../util/Logger";
 import DailyLogService from "./DailyLogService";
 
 jest.mock("crypto", () => {
@@ -13,6 +13,7 @@ jest.mock("crypto", () => {
 jest.mock("../../util/Logger.js", () => {
   return {
     logEvent: jest.fn(),
+    logError: jest.fn(),
   };
 });
 
@@ -83,17 +84,13 @@ describe("DailyLogService", () => {
   it("should do absolutely nothing if no user", async () => {
     const callbackMock = jest.fn();
     const insertMock = jest.fn();
-    const dailyLogEntity = new DailyLog(
-      "8",
-      new Date().toJSON().slice(0, 10),
-      "someId",
-      ""
-    );
 
     const mongoClient = new MongoClient();
-    mongoClient.getUser = jest.fn().mockImplementation((user, callback) => {
-      callback(undefined);
-    });
+    mongoClient.getUser = jest
+      .fn()
+      .mockImplementation((user, success, failure) => {
+        failure();
+      });
     mongoClient.insertDailyLog = insertMock;
 
     const dailyLogService = new DailyLogService(mongoClient);
@@ -101,6 +98,7 @@ describe("DailyLogService", () => {
 
     expect(logEvent).not.toHaveBeenCalled();
     expect(insertMock).not.toHaveBeenCalled();
-    expect(callbackMock).not.toHaveBeenCalled();
+    expect(logError).toHaveBeenCalledWith("Could not retrieve user.");
+    expect(callbackMock).toHaveBeenCalled();
   });
 });
