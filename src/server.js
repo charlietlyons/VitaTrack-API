@@ -1,10 +1,35 @@
 import dotenv from "dotenv";
 import express from "express";
-import routes from "./routes.js";
 import { logEvent } from "./util/Logger.js";
 import cors from "cors";
+import Authenticator from "./middleware/Authenticator.js";
+import UserController from "./controller/UserController/UserController.js";
+import IntakeController from "./controller/IntakeController/IntakeController.js";
+import FoodController from "./controller/FoodController/FoodController.js";
+import MongoClient from "./client/MongoClient/MongoClient.js";
+import UserService from "./service/UserService/UserService.js";
+import DailyLogService from "./service/DailyLogService/DailyLogService.js";
+import FoodService from "./service/FoodService/FoodService.js";
+import IntakeService from "./service/IntakeService/IntakeService.js";
+import { healthcheck } from "./controller/HealthCheckController/HealthCheckController.js";
+
 
 dotenv.config();
+
+// CLIENTS
+const mongoClient = new MongoClient();
+
+// SERVICES
+const userService = new UserService(mongoClient);
+const dailyLogService = new DailyLogService(mongoClient);
+const foodService = new FoodService(mongoClient);
+const intakeService = new IntakeService(mongoClient);
+
+// CONTROLLERS
+const userController = new UserController(userService, dailyLogService);
+const intakeController = new IntakeController(intakeService);
+const foodController = new FoodController(foodService);
+
 const PORT = process.env.PORT || 3000;
 const app = express();
 
@@ -19,6 +44,37 @@ if (true) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
-app.use(routes);
+
+const router = express.Router();
+
+// Healthcheck
+router.get("/health-check", (req, res) => {
+  healthcheck(req, res);
+});
+
+// Food
+router.post("/food", (req, res) => {
+  Authenticator.authenticate(req, res, foodController.addFood);
+});
+
+// User
+router.get("/reset-users", (req, res) =>
+  Authenticator.authenticate(req, res, userController.deleteAllUsers)
+);
+router.get("/account-details", (req, res) =>
+  Authenticator.authenticate(req, res, userController.getUserDetails)
+);
+router.post("/register-user", userController.createUser);
+router.post("/verify-user", userController.verifyUser);
+router.post("/verify-token", userController.verifyToken);
+
+// Intake
+router.get("/intake", (req, res) => {
+  Authenticator.authenticate(req, res, intakeController.getIntake);
+});
+router.post("/add-intake", (req, res) => {
+  Authenticator.authenticate(req, res, intakeController.addIntake);
+});
+app.use(router);
 
 export default app;

@@ -22,7 +22,9 @@ describe("FoodController", () => {
       servingSize: 100,
       servingUnit: "g",
     };
-    const mockAddFood = jest.fn();
+    const mockAddFood = jest.fn().mockImplementation((body, callback) => {
+      callback();
+    });
     const sendMock = jest.fn();
 
     foodService.addFood = mockAddFood;
@@ -31,7 +33,7 @@ describe("FoodController", () => {
 
     foodController.addFood({ body: payload }, { send: sendMock });
 
-    expect(mockAddFood).toHaveBeenCalledWith(payload);
+    expect(mockAddFood).toHaveBeenCalledWith(payload, expect.any(Function));
     expect(foodController).toBeDefined();
     expect(sendMock).toHaveBeenCalled();
     expect(logError).not.toHaveBeenCalled();
@@ -61,7 +63,7 @@ describe("FoodController", () => {
 
     foodController.addFood({ body: payload }, { send: sendMock });
 
-    expect(mockAddFood).toHaveBeenCalledWith(payload);
+    expect(mockAddFood).toHaveBeenCalledWith(payload, expect.any(Function));
     expect(foodController).toBeDefined();
     expect(logError).toHaveBeenCalled();
   });

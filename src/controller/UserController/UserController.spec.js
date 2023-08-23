@@ -257,13 +257,13 @@ describe("UserController", () => {
       });
     });
 
-    describe("deleteAll", () => {
+    describe("deleteAllUsers", () => {
       it("should delete all and return 200", async () => {
         userService.deleteAll = jest.fn((success, failure) => {
           success();
         });
 
-        await userController.deleteAll(req, res);
+        await userController.deleteAllUsers(req, res);
 
         expect(res.sendStatus).toHaveBeenCalledWith(200);
       });
@@ -273,7 +273,7 @@ describe("UserController", () => {
           failure();
         });
 
-        await userController.deleteAll(req, res);
+        await userController.deleteAllUsers(req, res);
 
         expect(res.sendStatus).toHaveBeenCalledWith(500);
       });

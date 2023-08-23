@@ -8,8 +8,9 @@ class FoodController {
 
   addFood(req, res) {
     try {
-      this.foodService.addFood(req.body);
-      res.send();
+      this.foodService.addFood(req.body, () => {
+        res.send();
+      });
     } catch (error) {
       logError(error);
       res.send(500);

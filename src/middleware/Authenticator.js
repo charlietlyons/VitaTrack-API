@@ -1,10 +1,17 @@
+import jwt from "jsonwebtoken";
+import { logError } from "../util/Logger";
+import dotenv from "dotenv";
+
+dotenv.config();
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
+
 const Authenticator = {
   authenticate(req, res, next) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
       logError("No token");
-      return res.status(401).send({ error: "No token" });
+      return res.status(401).send("No token");
     }
 
     const token = authHeader.split(" ")[1];

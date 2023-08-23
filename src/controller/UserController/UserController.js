@@ -63,7 +63,7 @@ export default class UserController {
     }
   };
 
-  deleteAll = (req, res) => {
+  deleteAllUsers = (req, res) => {
     this.userService.deleteAll(
       () => res.sendStatus(200),
       () => res.sendStatus(500)
