@@ -1,12 +1,11 @@
-import MongoClient from "../client/MongoClient.js";
-import { logEvent, logError } from "../util/Logger.js";
+import { logEvent, logError } from "../../util/Logger.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import UserValidator from "../validators/UserValidator.js";
-import { USER_ROLE } from "../constants.js";
+import UserValidator from "../../validators/UserValidator/UserValidator.js";
+import { USER_ROLE } from "../../constants.js";
 import crypto from "crypto";
-import { transformUserDataToUser } from "../transformer/UserTransformer.js";
+import UserTransformer from "../../transformer/UserTransformer/UserTransformer.js";
 
 dotenv.config();
 
@@ -14,8 +13,9 @@ const HASH_SALT_ROUNDS = process.env.HASH_SALT_ROUNDS;
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 export default class UserService {
-  constructor() {
-    this.mongoClient = new MongoClient();
+  constructor(mongoClient) {
+    this.mongoClient = mongoClient;
+    this.userTransformer = new UserTransformer();
   }
 
   createUser = (userData, successHandler, failHandler) => {
@@ -23,7 +23,7 @@ export default class UserService {
       failHandler("Payload incomplete", 400);
     } else {
       try {
-        const user = transformUserDataToUser(
+        const user = this.userTransformer.transformUserDataToUser(
           userData,
           crypto.randomUUID(),
           USER_ROLE
@@ -62,13 +62,13 @@ export default class UserService {
     }
   }
 
-  verifyUser(user, successHandler, failHandler) {
+  verifyUser(loginFormData, successHandler, failHandler) {
     try {
-      this.mongoClient.findUser(user.email, (result) => {
+      this.mongoClient.findUser(loginFormData.email, (result) => {
         if (result) {
-          this.checkPasswordForToken(user, result)
-            .then((token) => successHandler(token))
-            .catch((error) => failHandler(error));
+          this.checkPasswordForToken(loginFormData, result).then((token) =>
+            successHandler(token)
+          );
         } else {
           failHandler("User does not exist");
         }
@@ -98,20 +98,30 @@ export default class UserService {
     }
   }
 
-  checkPasswordForToken(user, result) {
-    return bcrypt.compare(user.password, result._password).then((match) => {
-      if (match) {
-        const token = jwt.sign({ email: user.email }, ACCESS_TOKEN_SECRET, {
-          expiresIn: "1hr",
-        });
-        logEvent(`${user.email} logged in`);
-        return token;
-      }
-    });
+  checkPasswordForToken(loginFormData, result) {
+    return bcrypt
+      .compare(loginFormData.password, result._password)
+      .then((match) => {
+        if (match) {
+          const token = jwt.sign(
+            { email: loginFormData.email },
+            ACCESS_TOKEN_SECRET,
+            {
+              expiresIn: "1hr",
+            }
+          );
+          logEvent(`${loginFormData.email} logged in`);
+          return token;
+        } else {
+          logEvent(
+            `User attempted to login with incorrect password using email: ${loginFormData.email}`
+          );
+        }
+      });
   }
 
   registerHandler(user) {
-    bcrypt.genSalt(parseInt(HASH_SALT_ROUNDS)).then((salt) => {
+    return bcrypt.genSalt(parseInt(HASH_SALT_ROUNDS)).then((salt) => {
       bcrypt.hash(user.password, salt).then((hash) => {
         user.salt = salt;
         user.password = hash;

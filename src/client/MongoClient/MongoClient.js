@@ -1,6 +1,6 @@
 import { MongoClient as MongoClientInstance } from "mongodb";
 import dotenv from "dotenv";
-import { logEvent, logError } from "../util/Logger.js";
+import { logEvent } from "../../util/Logger.js";
 
 dotenv.config();
 
@@ -18,6 +18,7 @@ export default class MongoClient {
     });
   }
 
+  // TODO: Chaining queries?
   insertUser(user) {
     this.client.db(DB_NAME).collection("user").insertOne(user);
     logEvent("User inserted");
@@ -33,21 +34,26 @@ export default class MongoClient {
     logEvent("Intake inserted");
   }
 
-  getUserIntake(userId, dayId, foundCallback, notFoundCallback) {
-    const query = { dayId: dayId, userId: userId }
-    this.client.db(DB_NAME).collection("intake").find(query).toArray().then((result) => {
-      if (result.length > 0) {
-        logEvent("Intake found");
-        foundCallback(result);
-      } else {
-        notFoundCallback();
-      }
-    });
+  insertFood(food) {
+    this.client.db(DB_NAME).collection("food").insertOne(food);
+    logEvent("Food inserted");
   }
 
-  // TODO: look into chaining this garbage together
-  insertFood(food) {
-    this.client.db(DB_NAME).collection("food").insertOne(food)
+  getUserIntake(userId, dayId, foundCallback, notFoundCallback) {
+    const query = { dayId: dayId, userId: userId };
+    this.client
+      .db(DB_NAME)
+      .collection("intake")
+      .find(query)
+      .toArray()
+      .then((result) => {
+        if (result.length > 0) {
+          logEvent("Intake found");
+          foundCallback(result);
+        } else {
+          notFoundCallback();
+        }
+      });
   }
 
   getDailyLog(userId, date, foundCallback, notFoundCallback) {
@@ -68,7 +74,7 @@ export default class MongoClient {
       });
   }
 
-  findUser(email, callback) {
+  getUser(email, successCallback, failCallback) {
     const query = { _email: email };
 
     this.client
@@ -78,14 +84,11 @@ export default class MongoClient {
       .then((user) => {
         if (user) {
           logEvent("User found");
-          callback(user);
+          successCallback(user);
         } else {
           logEvent("User not found");
-          callback(null);
+          failCallback();
         }
-      })
-      .catch((error) => {
-        logError(error);
       });
   }
 
