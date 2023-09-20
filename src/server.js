@@ -13,7 +13,6 @@ import FoodService from "./service/FoodService/FoodService.js";
 import IntakeService from "./service/IntakeService/IntakeService.js";
 import { healthcheck } from "./controller/HealthCheckController/HealthCheckController.js";
 
-
 dotenv.config();
 
 // CLIENTS
@@ -53,6 +52,9 @@ router.get("/health-check", (req, res) => {
 });
 
 // Food
+router.get("/food", (req, res) => {
+  Authenticator.authenticate(req, res, foodController.getFoodOptions);
+});
 router.post("/food", (req, res) => {
   Authenticator.authenticate(req, res, foodController.addFood);
 });

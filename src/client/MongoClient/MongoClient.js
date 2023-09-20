@@ -18,9 +18,8 @@ export default class MongoClient {
     });
   }
 
-  // TODO: Chaining queries?
-  insertUser(user) {
-    this.client.db(DB_NAME).collection("user").insertOne(user);
+  async insertUser(user) {
+    await this.client.db(DB_NAME).collection("user").insertOne(user);
     logEvent("User inserted");
   }
 
@@ -34,9 +33,22 @@ export default class MongoClient {
     logEvent("Intake inserted");
   }
 
-  insertFood(food) {
-    this.client.db(DB_NAME).collection("food").insertOne(food);
+  async insertFood(food) {
+    await this.client.db(DB_NAME).collection("food").insertOne(food);
     logEvent("Food inserted");
+  }
+
+  async getPublicAndPrivateFoodOptions(userId) {
+    const query = {
+      $or: [{ access: "PUBLIC_ACCESS" }, { access: "PRIVATE_ACCESS", userId: userId }],
+    };
+
+    const foods = await this.client
+      .db(DB_NAME)
+      .collection("food")
+      .find(query)
+      .toArray();
+    return foods;
   }
 
   getUserIntake(userId, dayId, foundCallback, notFoundCallback) {
@@ -56,40 +68,30 @@ export default class MongoClient {
       });
   }
 
-  getDailyLog(userId, date, foundCallback, notFoundCallback) {
+  async getDailyLog(userId, date) {
     const query = { userId: userId, date: date };
 
-    this.client
+    const result = await this.client
       .db(DB_NAME)
       .collection("daystat")
-      .findOne(query)
-      .then((result) => {
-        if (result) {
-          logEvent("Daily log found");
-          foundCallback(result);
-        } else {
-          logEvent("Daily log not found");
-          notFoundCallback(result);
-        }
-      });
+      .findOne(query);
+
+    if (result) {
+      logEvent("Daily log found");
+    } else {
+      logEvent("Daily log not found");
+    }
+
+    return result;
   }
 
-  getUser(email, successCallback, failCallback) {
+  async getUser(email) {
     const query = { _email: email };
 
-    this.client
-      .db(DB_NAME)
-      .collection("user")
-      .findOne(query)
-      .then((user) => {
-        if (user) {
-          logEvent("User found");
-          successCallback(user);
-        } else {
-          logEvent("User not found");
-          failCallback();
-        }
-      });
+    const db = this.client.db(DB_NAME).collection("user");
+
+    const user = await db.findOne(query);
+    return user;
   }
 
   deleteAllUsers(callback) {

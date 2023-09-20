@@ -8,7 +8,7 @@ export default class IntakeService {
 
   // TODO: refactor to avoid callback hell
   getUserIntake(userId, date, successHandler, failHandler) {
-    this.mongoClient.findUser(userId, (user) => {
+    this.mongoClient.getUser(userId, (user) => {
       if (user) {
         this.mongoClient.getDailyLog(
           user._id,
@@ -52,7 +52,7 @@ export default class IntakeService {
   }
 
   addIntake(intake, successHandler, failHandler) {
-    this.mongoClient.findUser(intake.email, (user) => {
+    this.mongoClient.getUser(intake.email, (user) => {
       this.mongoClient.getDailyLog(
         user._id,
         new Date().toJSON().slice(0, 10),

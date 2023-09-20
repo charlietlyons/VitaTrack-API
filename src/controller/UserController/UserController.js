@@ -6,13 +6,15 @@ export default class UserController {
     this.dailyLogService = dailyLogService;
   }
 
-  createUser = (req, res) => {
+  createUser = async (req, res) => {
     try {
-      this.userService.createUser(
-        req.body,
-        () => this.successHandler(req, res, "User created"),
-        (error) => this.failHandler(req, res, error, 500)
-      );
+      const response = await this.userService.createUser(req.body);
+
+      if (response) {
+        this.successHandler(req, res, "User created");
+      } else {
+        this.failHandler(req, res, new Error("Failed to create user.", 500));
+      }
     } catch (e) {
       this.failHandler(req, res, e, 500);
     }
@@ -31,21 +33,12 @@ export default class UserController {
   };
 
   // TODO: have this return JUST the token and not the whole JS object
-  verifyUser = (req, res) => {
+  verifyUser = async (req, res) => {
     try {
-      this.userService.verifyUser(
-        req.body,
-        (token) => {
-          this.dailyLogService.prepareDailyLog(
-            req.body.email,
-            () => {
-              this.successHandler(req, res, JSON.stringify({ token: token }));
-            },
-            () => this.failHandler(req, res, "Log already exists", 500)
-          );
-        },
-        (error) => this.failHandler(req, res, error, 403)
-      );
+      const token = await this.userService.verifyUser(req.body);
+
+      this.dailyLogService.prepareDailyLog(req.body.email);
+      this.successHandler(req, res, JSON.stringify({ token: token }));
     } catch (e) {
       this.failHandler(req, res, e, 500);
     }

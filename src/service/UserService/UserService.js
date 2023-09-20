@@ -18,63 +18,46 @@ export default class UserService {
     this.userTransformer = new UserTransformer();
   }
 
-  createUser = (userData, successHandler, failHandler) => {
-    if (UserValidator.validateRegisterUserPayload(userData) == false) {
-      failHandler("Payload incomplete", 400);
+  createUser = async (userData) => {
+    if (!UserValidator.validateRegisterUserPayload(userData)) {
+      logError("Invalid user data");
     } else {
-      try {
-        const user = this.userTransformer.transformUserDataToUser(
-          userData,
-          crypto.randomUUID(),
-          USER_ROLE
-        );
-        this.mongoClient.findUser(user.email, (result) => {
-          if (!result) {
-            this.registerHandler(user);
-            successHandler();
-          } else {
-            failHandler("User already exists");
-          }
-        });
-      } catch (e) {
-        failHandler(e);
+      const user = this.userTransformer.transformUserDataToUser(
+        userData,
+        crypto.randomUUID(),
+        USER_ROLE
+      );
+      const existingUser = await this.mongoClient.getUser(user._email);
+      if (!existingUser) {
+        await this.registerHandler(user);
+        return user;
       }
     }
   };
 
   getUserDetails(user, successHandler, failHandler) {
-    try {
-      this.mongoClient.findUser(user, (result) => {
-        if (result) {
-          const accountDetails = {
-            first: result._firstName,
-            last: result._lastName,
-            email: result._email,
-            phone: result._phone,
-          };
-          successHandler(accountDetails);
-        } else {
-          failHandler("User does not exist");
-        }
-      });
-    } catch (e) {
-      failHandler(e);
-    }
+    this.mongoClient.getUser(user, (result) => {
+      if (result) {
+        const accountDetails = {
+          first: result._firstName,
+          last: result._lastName,
+          email: result._email,
+          phone: result._phone,
+        };
+        successHandler(accountDetails);
+      } else {
+        failHandler("User does not exist");
+      }
+    });
   }
 
-  verifyUser(loginFormData, successHandler, failHandler) {
-    try {
-      this.mongoClient.findUser(loginFormData.email, (result) => {
-        if (result) {
-          this.checkPasswordForToken(loginFormData, result).then((token) =>
-            successHandler(token)
-          );
-        } else {
-          failHandler("User does not exist");
-        }
-      });
-    } catch (e) {
-      failHandler(e);
+  async verifyUser(loginFormData) {
+    const result = await this.mongoClient.getUser(loginFormData.email);
+    if (result) {
+      const token = this.checkPasswordForToken(loginFormData, result);
+      return token;
+    } else {
+      logError("User does not exist");
     }
   }
 
@@ -120,11 +103,11 @@ export default class UserService {
       });
   }
 
-  registerHandler(user) {
-    return bcrypt.genSalt(parseInt(HASH_SALT_ROUNDS)).then((salt) => {
-      bcrypt.hash(user.password, salt).then((hash) => {
+  async registerHandler(user) {
+    return await bcrypt.genSalt(parseInt(HASH_SALT_ROUNDS)).then((salt) => {
+      bcrypt.hash(user._password, salt).then((hash) => {
         user.salt = salt;
-        user.password = hash;
+        user._password = hash;
         this.mongoClient.insertUser(user);
         // TODO: Email Verification
       });

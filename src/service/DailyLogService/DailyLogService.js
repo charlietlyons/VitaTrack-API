@@ -7,38 +7,24 @@ class DailyLogService {
     this.mongoClient = mongoClient;
   }
 
-  prepareDailyLog(user, callback) {
-    this.mongoClient.getUser(
-      user,
-      (result) => {
-        const today = new Date().toJSON().slice(0, 10);
+  prepareDailyLog(user) {
+    const result = this.mongoClient.getUser(user);
+    const today = new Date().toJSON().slice(0, 10);
 
-        const dailyLogInitialPayload = new DailyLog(
-          crypto.randomUUID(),
-          today,
-          result._id,
-          ""
-        );
-
-        this.mongoClient.getDailyLog(
-          result._id,
-          today,
-          () => {
-            logEvent("Daily Log retrieved successfully.");
-            callback();
-          },
-          () => {
-            logEvent("Could not retrieve Daily Log. Preparing a new one...");
-            this.mongoClient.insertDailyLog(dailyLogInitialPayload);
-            callback();
-          }
-        );
-      },
-      () => {
-        logError("Could not retrieve user.");
-        callback();
-      }
+    const dailyLogInitialPayload = new DailyLog(
+      crypto.randomUUID(),
+      today,
+      result._id,
+      ""
     );
+
+    const existingDailyLog = this.mongoClient.getDailyLog(result._id, today);
+
+    if (existingDailyLog) {
+      return existingDailyLog;
+    } else {
+      return this.mongoClient.insertDailyLog(dailyLogInitialPayload);
+    }
   }
 }
 

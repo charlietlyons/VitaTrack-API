@@ -19,7 +19,7 @@ describe("IntakeService", () => {
       const successHandlerSpy = jest.fn();
       const failHandlerSpy = jest.fn();
       const mongoClient = new MongoClient();
-      const findUserSpy = jest.fn().mockImplementation((user, callback) => {
+      const getUserSpy = jest.fn().mockImplementation((user, callback) => {
         callback({ _id: userId });
       });
       const getDailyLogSpy = jest
@@ -32,7 +32,7 @@ describe("IntakeService", () => {
         .mockImplementation((userId, logId, found, notFound) => {
           found([{ _id: intakeId, quantity: 1 }]);
         });
-      mongoClient.findUser = findUserSpy;
+      mongoClient.getUser = getUserSpy;
       mongoClient.getUserIntake = getIntakeSpy;
       mongoClient.getDailyLog = getDailyLogSpy;
 
@@ -46,11 +46,11 @@ describe("IntakeService", () => {
       );
       expect(successHandlerSpy).toHaveBeenCalled();
       expect(failHandlerSpy).not.toHaveBeenCalled();
-      expect(mongoClient.findUser).toHaveBeenCalledWith(
+      expect(mongoClient.getUser).toHaveBeenCalledWith(
         userId,
         expect.any(Function)
       );
-      expect(findUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
+      expect(getUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
       expect(getDailyLogSpy).toHaveBeenCalledWith(
         userId,
         date,
@@ -71,12 +71,12 @@ describe("IntakeService", () => {
       const successHandlerSpy = jest.fn();
       const failHandlerSpy = jest.fn();
       const mongoClient = new MongoClient();
-      const findUserSpy = jest.fn().mockImplementation((user, callback) => {
+      const getUserSpy = jest.fn().mockImplementation((user, callback) => {
         callback(null);
       });
       const getDailyLogSpy = jest.fn();
       const getIntakeSpy = jest.fn();
-      mongoClient.findUser = findUserSpy;
+      mongoClient.getUser = getUserSpy;
       mongoClient.getUserIntake = getIntakeSpy;
       mongoClient.getDailyLog = getDailyLogSpy;
 
@@ -91,11 +91,11 @@ describe("IntakeService", () => {
 
       expect(failHandlerSpy).toHaveBeenCalled();
       expect(successHandlerSpy).not.toHaveBeenCalled();
-      expect(mongoClient.findUser).toHaveBeenCalledWith(
+      expect(mongoClient.getUser).toHaveBeenCalledWith(
         userId,
         expect.any(Function)
       );
-      expect(findUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
+      expect(getUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
       expect(getDailyLogSpy).not.toHaveBeenCalled();
       expect(getIntakeSpy).not.toHaveBeenCalled();
     });
@@ -106,7 +106,7 @@ describe("IntakeService", () => {
       const successHandlerSpy = jest.fn();
       const failHandlerSpy = jest.fn();
       const mongoClient = new MongoClient();
-      const findUserSpy = jest.fn().mockImplementation((user, callback) => {
+      const getUserSpy = jest.fn().mockImplementation((user, callback) => {
         callback({ _id: userId });
       });
       const getDailyLogSpy = jest
@@ -115,7 +115,7 @@ describe("IntakeService", () => {
           failure();
         });
       const getIntakeSpy = jest.fn();
-      mongoClient.findUser = findUserSpy;
+      mongoClient.getUser = getUserSpy;
       mongoClient.getUserIntake = getIntakeSpy;
       mongoClient.getDailyLog = getDailyLogSpy;
 
@@ -130,11 +130,11 @@ describe("IntakeService", () => {
 
       expect(failHandlerSpy).toHaveBeenCalled();
       expect(successHandlerSpy).not.toHaveBeenCalled();
-      expect(mongoClient.findUser).toHaveBeenCalledWith(
+      expect(mongoClient.getUser).toHaveBeenCalledWith(
         userId,
         expect.any(Function)
       );
-      expect(findUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
+      expect(getUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
       expect(getDailyLogSpy).toHaveBeenCalledWith(
         userId,
         date,
@@ -152,7 +152,7 @@ describe("IntakeService", () => {
       const successHandlerSpy = jest.fn();
       const failHandlerSpy = jest.fn();
       const mongoClient = new MongoClient();
-      const findUserSpy = jest.fn().mockImplementation((user, callback) => {
+      const getUserSpy = jest.fn().mockImplementation((user, callback) => {
         callback({ _id: userId });
       });
       const getDailyLogSpy = jest
@@ -165,7 +165,7 @@ describe("IntakeService", () => {
         .mockImplementation((userId, logId, found, notFound) => {
           notFound();
         });
-      mongoClient.findUser = findUserSpy;
+      mongoClient.getUser = getUserSpy;
       mongoClient.getUserIntake = getIntakeSpy;
       mongoClient.getDailyLog = getDailyLogSpy;
 
@@ -180,11 +180,11 @@ describe("IntakeService", () => {
 
       expect(failHandlerSpy).toHaveBeenCalled();
       expect(successHandlerSpy).not.toHaveBeenCalled();
-      expect(mongoClient.findUser).toHaveBeenCalledWith(
+      expect(mongoClient.getUser).toHaveBeenCalledWith(
         userId,
         expect.any(Function)
       );
-      expect(findUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
+      expect(getUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
       expect(getDailyLogSpy).toHaveBeenCalledWith(
         userId,
         date,
@@ -210,7 +210,7 @@ describe("IntakeService", () => {
 
       const expected = new Intake("8", userId, logId, foodId, 1);
       const mongoClient = new MongoClient();
-      mongoClient.findUser = jest.fn().mockImplementation((user, callback) => {
+      mongoClient.getUser = jest.fn().mockImplementation((user, callback) => {
         callback({ _id: userId });
       });
       mongoClient.getDailyLog = jest

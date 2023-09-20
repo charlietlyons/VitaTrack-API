@@ -9,17 +9,26 @@ class FoodService {
   addFood(food, callback) {
     const foodEntity = new Food(
       crypto.randomUUID(),
+      food.userId,
       food.name,
       food.calories,
       food.protein,
       food.carbs,
       food.fat,
       food.servingSize,
-      food.servingUnit
+      food.servingUnit,
+      food.access,
+      food.description,
+      food.imageUrl
     );
 
     this.mongoClient.insertFood(foodEntity);
     callback();
+  }
+
+  async getFoodOptions(userId) {
+    const foods = await this.mongoClient.getPublicAndPrivateFoodOptions(userId);
+    return foods
   }
 }
 

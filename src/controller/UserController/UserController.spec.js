@@ -51,39 +51,51 @@ describe("UserController", () => {
     });
 
     describe("createUser", () => {
-      it("should call success handler if user is successfully created", async () => {
-        userService.createUser = jest.fn((body, success, failure) =>
-          success(req, res, "User created")
-        );
+      it("should call create user", async () => {
+        const createUserMock = jest.fn((body) => {
+          return "some crazy body";
+        });
+
+        userService.createUser = createUserMock;
 
         await userController.createUser(req, res);
 
-        expect(successHandlerSpy).toHaveBeenCalledWith(
-          req,
-          res,
-          "User created"
-        );
-        expect(failHandlerSpy).not.toHaveBeenCalled();
+        expect(createUserMock).toHaveBeenCalledWith(req.body);
+        expect(logError).not.toHaveBeenCalled();
+        expect(successHandlerSpy).toHaveBeenCalled();
       });
 
-      it("should call failHandler with error on create user failure", async () => {
-        userService.createUser = jest.fn((body, success, failure) =>
-          failure("some wacky crazy error")
-        );
+      it("should call create user", async () => {
+        const createUserMock = jest.fn((body) => {
+          return null;
+        });
+
+        userService.createUser = createUserMock;
 
         await userController.createUser(req, res);
 
-        expect(successHandlerSpy).not.toHaveBeenCalled();
+        expect(createUserMock).toHaveBeenCalledWith(req.body);
         expect(failHandlerSpy).toHaveBeenCalledWith(
           req,
           res,
-          "some wacky crazy error",
-          500
+          new Error("Failed to create user.", 500)
         );
       });
 
+      it("should call failHandler with error on create user failure", async () => {
+        const bigError = new Error("big and crazy error");
+
+        userService.createUser = jest.fn((body) => {
+          throw bigError;
+        });
+
+        await userController.createUser(req, res);
+
+        expect(failHandlerSpy).toHaveBeenCalledWith(req, res, bigError, 500);
+      });
+
       it("should call fail handler on error", async () => {
-        const bigError = Error("big and crazy error");
+        const bigError = new Error("big and crazy error");
 
         userService.createUser = jest.fn((body, success, failure) => {
           throw bigError;
@@ -149,15 +161,15 @@ describe("UserController", () => {
     });
 
     describe("verifyUser", () => {
-      it("should call success handler if user is verified and prepare log is successful", async () => {
-        userService.verifyUser = jest.fn((body, success, failure) => {
-          success("some token");
+      it("should return token user is verified and prepare log is successful", async () => {
+        userService.verifyUser = jest.fn((body) => {
+          return "some token";
         });
-        dailyLogService.prepareDailyLog = jest.fn((email, success, failure) => {
-          success();
+        dailyLogService.prepareDailyLog = jest.fn(() => {
+          return {};
         });
 
-        userController.verifyUser(req, res);
+        await userController.verifyUser(req, res);
 
         expect(successHandlerSpy).toHaveBeenCalledWith(
           req,
@@ -165,41 +177,6 @@ describe("UserController", () => {
           JSON.stringify({ token: "some token" })
         );
         expect(failHandlerSpy).not.toHaveBeenCalled();
-      });
-
-      it("should send 500 if daily log already exists", async () => {
-        userService.verifyUser = jest.fn((body, success, failure) => {
-          success("some token");
-        });
-        dailyLogService.prepareDailyLog = jest.fn((email, success, failure) => {
-          failure();
-        });
-
-        userController.verifyUser(req, res);
-
-        expect(successHandlerSpy).not.toHaveBeenCalled();
-        expect(failHandlerSpy).toHaveBeenCalledWith(
-          req,
-          res,
-          "Log already exists",
-          500
-        );
-      });
-
-      it("should send 403 if user is not found", () => {
-        userService.verifyUser = jest.fn((body, success, failure) => {
-          failure("errooooooor");
-        });
-
-        userController.verifyUser(req, res);
-
-        expect(successHandlerSpy).not.toHaveBeenCalled();
-        expect(failHandlerSpy).toHaveBeenCalledWith(
-          req,
-          res,
-          "errooooooor",
-          403
-        );
       });
 
       it("should send 500 if user service throws an error", () => {

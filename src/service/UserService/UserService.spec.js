@@ -29,78 +29,136 @@ describe("UserService", () => {
     const userPayload = {
       email: "someEmail",
       password: "somePassword",
-      firstName: "someFirstName",
-      lastName: "someLastName",
+      first: "someFirstName",
+      last: "someLastName",
       phone: "somePhone",
     };
-    const successSpy = jest.fn(),
-      failureSpy = jest.fn();
+    const registerSpy = jest.fn();
 
-    it("should fail if payload is incomplete", () => {
+    it("should fail if payload is incomplete", async () => {
       const mongoClient = new MongoClient();
       const userService = new UserService(mongoClient);
 
       UserValidator.validateRegisterUserPayload = jest
         .fn()
         .mockReturnValue(false);
-      userService.createUser(userPayload, successSpy, failureSpy);
 
-      expect(failureSpy).toHaveBeenCalledWith("Payload incomplete", 400);
-    });
-
-    it("should register user if user doesn't exist", () => {
-      const registerSpy = jest.fn();
-      const mongoClient = new MongoClient();
-
-      mongoClient.findUser = jest.fn().mockImplementation((email, callback) => {
-        callback(false);
-      });
-
-      const userService = new UserService(mongoClient);
       userService.registerHandler = registerSpy;
+      await userService.createUser(userPayload);
 
-      userService.createUser(userPayload, successSpy, failureSpy);
-
-      expect(successSpy).toHaveBeenCalled();
-      expect(registerSpy).toHaveBeenCalled();
-      expect(failureSpy).not.toHaveBeenCalled();
-    });
-
-    it("should not register user if user exists", () => {
-      const registerSpy = jest.fn();
-      const mongoClient = new MongoClient();
-
-      mongoClient.findUser = jest.fn().mockImplementation((email, callback) => {
-        callback(true);
-      });
-
-      const userService = new UserService(mongoClient);
-      userService.registerHandler = registerSpy;
-
-      userService.createUser(userPayload, successSpy, failureSpy);
-
-      expect(successSpy).not.toHaveBeenCalled();
+      expect(logError).toHaveBeenCalledWith("Invalid user data");
       expect(registerSpy).not.toHaveBeenCalled();
-      expect(failureSpy).toHaveBeenCalledWith("User already exists");
     });
 
-    it("should not register user if error occurs", () => {
-      const registerSpy = jest.fn();
+    it("should register user if user doesn't exist", async () => {
       const mongoClient = new MongoClient();
-      const error = new Error("the worst thing ever happened");
+      const expectedUser = new User(
+        "8",
+        userPayload.password,
+        userPayload.first,
+        userPayload.last,
+        userPayload.email,
+        userPayload.phone,
+        "user"
+      );
 
-      mongoClient.findUser = jest.fn().mockImplementation((email, callback) => {
-        throw error;
+      UserValidator.validateRegisterUserPayload = jest
+        .fn()
+        .mockReturnValue(true);
+
+      mongoClient.getUser = jest.fn().mockImplementation((email) => {
+        return false;
       });
 
       const userService = new UserService(mongoClient);
       userService.registerHandler = registerSpy;
 
-      userService.createUser(userPayload, successSpy, failureSpy);
+      const user = await userService.createUser(userPayload);
 
-      expect(successSpy).not.toHaveBeenCalled();
+      expect(user._id).toBe("8");
+      expect(logError).not.toHaveBeenCalled();
+      expect(registerSpy).toHaveBeenCalledWith(expectedUser);
+    });
+
+    it("should not register user if user exists", async () => {
+      const registerSpy = jest.fn();
+      const mongoClient = new MongoClient();
+
+      mongoClient.getUser = jest.fn().mockImplementation((email) => {
+        return true;
+      });
+
+      const userService = new UserService(mongoClient);
+      userService.registerHandler = registerSpy;
+
+      await userService.createUser(userPayload);
+
       expect(registerSpy).not.toHaveBeenCalled();
-      expect(failureSpy).toHaveBeenCalledWith(error);
+    });
+
+    it("should not register user if error occurs", async () => {
+      const registerSpy = jest.fn();
+      const mongoClient = new MongoClient();
+
+      mongoClient.getUser = jest.fn().mockImplementation((email) => {
+        return Error("the worst thing ever happened");
+      });
+
+      const userService = new UserService(mongoClient);
+      userService.registerHandler = registerSpy;
+
+      await userService.createUser(userPayload);
+
+      expect(registerSpy).not.toHaveBeenCalled();
+    });
+
+    it("should return new user entity if existingUser is null", async () => {
+      const mongoClient = new MongoClient();
+      const expectedEntity = new User(
+        "8",
+        userPayload.password,
+        userPayload.first,
+        userPayload.last,
+        userPayload.email,
+        userPayload.phone,
+        "user"
+      );
+
+      UserValidator.validateRegisterUserPayload = jest
+        .fn()
+        .mockReturnValue(true);
+      mongoClient.getUser = jest.fn().mockReturnValue(null);
+      const userService = new UserService(mongoClient);
+      userService.registerHandler = registerSpy;
+
+      const result = await userService.createUser(userPayload);
+
+      expect(result).toEqual(expectedEntity);
+    });
+
+    it("should do nothing if user already exists", async () => {
+      const mongoClient = new MongoClient();
+      const existingEntity = new User(
+        "8",
+        userPayload.password,
+        userPayload.first,
+        userPayload.last,
+        userPayload.email,
+        userPayload.phone,
+        "user"
+      );
+
+      UserValidator.validateRegisterUserPayload = jest
+        .fn()
+        .mockReturnValue(true);
+      mongoClient.getUser = jest.fn().mockReturnValue(existingEntity);
+      const userService = new UserService(mongoClient);
+      userService.registerHandler = registerSpy;
+
+      const result = await userService.createUser(userPayload);
+
+      expect(result).toBeUndefined();
+      expect(registerSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -113,7 +171,7 @@ describe("UserService", () => {
       const successSpy = jest.fn(),
         failureSpy = jest.fn();
       const mongoClient = new MongoClient();
-      mongoClient.findUser = jest.fn().mockImplementation((email, callback) => {
+      mongoClient.getUser = jest.fn().mockImplementation((email, callback) => {
         callback(
           new User(
             "someId",
@@ -144,7 +202,7 @@ describe("UserService", () => {
       const successSpy = jest.fn(),
         failureSpy = jest.fn();
       const mongoClient = new MongoClient();
-      mongoClient.findUser = jest.fn().mockImplementation((email, callback) => {
+      mongoClient.getUser = jest.fn().mockImplementation((email, callback) => {
         callback(null);
       });
       const userService = new UserService(mongoClient);
@@ -152,120 +210,54 @@ describe("UserService", () => {
       userService.getUserDetails(email, successSpy, failureSpy);
 
       expect(failureSpy).toHaveBeenCalledWith("User does not exist");
-      expect(successSpy).not.toHaveBeenCalled();
-    });
-
-    it("should not return account details if user doesn't exists", () => {
-      const email = "someEmail";
-      const error = new Error("the second worst thing ever happened");
-      const successSpy = jest.fn(),
-        failureSpy = jest.fn();
-      const mongoClient = new MongoClient();
-      mongoClient.findUser = jest.fn().mockImplementation((email, callback) => {
-        throw error;
-      });
-      const userService = new UserService(mongoClient);
-
-      userService.getUserDetails(email, successSpy, failureSpy);
-
-      expect(failureSpy).toHaveBeenCalledWith(error);
       expect(successSpy).not.toHaveBeenCalled();
     });
   });
 
   describe("verifyUser", () => {
     it("should return token if user exists and password is correct", async () => {
-      const successSpy = jest.fn(),
-        failureSpy = jest.fn();
       const token = "someToken";
       const mongoClient = new MongoClient();
-      mongoClient.findUser = jest.fn().mockImplementation((email, callback) => {
-        callback({
+      mongoClient.getUser = jest.fn().mockImplementation((email) => {
+        return {
           _id: "someId",
           _password: "somePassword",
-        });
+        };
       });
       const userService = new UserService(mongoClient);
       userService.checkPasswordForToken = jest.fn().mockResolvedValue(token);
-
-      await userService.verifyUser(
-        {
-          email: "someEmail",
-          password: "somePassword",
-        },
-        successSpy,
-        failureSpy
-      );
-
-      expect(successSpy).toHaveBeenCalledWith(token);
+      const result = await userService.verifyUser({
+        email: "someEmail",
+        password: "somePassword",
+      });
+      expect(result).toEqual(token);
     });
 
     it("should not return token if user doesn't exists", async () => {
-      const successSpy = jest.fn(),
-        failureSpy = jest.fn();
-      const token = "someToken";
       const mongoClient = new MongoClient();
-      mongoClient.findUser = jest.fn().mockImplementation((email, callback) => {
-        callback(null);
-      });
-      const userService = new UserService(mongoClient);
-      await userService.verifyUser(
-        {
-          email: "someEmail",
-          password: "somePassword",
-        },
-        successSpy,
-        failureSpy
-      );
+      mongoClient.getUser = jest.fn().mockReturnValue(null);
 
-      expect(successSpy).not.toHaveBeenCalled();
-      expect(failureSpy).toHaveBeenCalledWith("User does not exist");
+      const userService = new UserService(mongoClient);
+      await userService.verifyUser({
+        email: "someEmail",
+        password: "somePassword",
+      });
+      expect(logError).toHaveBeenCalledWith("User does not exist");
     });
 
     it("should not return token if password is incorrect", async () => {
-      const successSpy = jest.fn(),
-        failureSpy = jest.fn();
       const mongoClient = new MongoClient();
-      mongoClient.findUser = jest.fn().mockImplementation((email, callback) => {
-        callback({
-          _id: "someId",
-          _password: "somePassword",
-        });
+      mongoClient.getUser = jest.fn().mockReturnValue({
+        _id: "someId",
+        _password: "somePassword",
       });
       const userService = new UserService(mongoClient);
       userService.checkPasswordForToken = jest.fn().mockResolvedValue(null);
-      await userService.verifyUser(
-        {
-          email: "someEmail",
-          password: "somePassword",
-        },
-        successSpy,
-        failureSpy
-      );
-      expect(successSpy).toHaveBeenCalledWith(null);
-      expect(failureSpy).not.toHaveBeenCalled();
-    });
-
-    it("should fail handle if error thrown", async () => {
-      const successSpy = jest.fn(),
-        failureSpy = jest.fn();
-      const error = new Error("the third worst thing ever happened");
-      const mongoClient = new MongoClient();
-      mongoClient.findUser = jest.fn().mockImplementation((email, callback) => {
-        throw error;
+      const result = await userService.verifyUser({
+        email: "someEmail",
+        password: "somePassword",
       });
-      const userService = new UserService(mongoClient);
-      userService.checkPasswordForToken = jest.fn().mockResolvedValue(null);
-      await userService.verifyUser(
-        {
-          email: "someEmail",
-          password: "somePassword",
-        },
-        successSpy,
-        failureSpy
-      );
-      expect(successSpy).not.toHaveBeenCalled();
-      expect(failureSpy).toHaveBeenCalledWith(error);
+      expect(result).toBeNull();
     });
   });
 
@@ -293,7 +285,7 @@ describe("UserService", () => {
     it("should return data if token is valid", () => {
       const successSpy = jest.fn(),
         failureSpy = jest.fn();
-      const error = new Error("big problem with the plumbing");
+      const error = Error("big problem with the plumbing");
       const mongoClient = new MongoClient();
       const userService = new UserService(mongoClient);
 
@@ -327,7 +319,7 @@ describe("UserService", () => {
     it("should fail if error thrown", async () => {
       const successSpy = jest.fn(),
         failureSpy = jest.fn();
-      const error = new Error("the fourth worst thing ever happened");
+      const error = Error("the fourth worst thing ever happened");
       const mongoClient = new MongoClient();
       mongoClient.deleteAllUsers = jest.fn().mockImplementation((callback) => {
         throw error;

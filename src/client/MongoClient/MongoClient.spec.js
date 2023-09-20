@@ -4,6 +4,11 @@ import MongoClient from "./MongoClient.js";
 import { MongoClient as MongoClientInstance } from "mongodb";
 import Intake from "../../data/Intake.js";
 import Food from "../../data/Food.js";
+import {
+  PRIVATE_ACCESS,
+  PUBLIC_ACCESS,
+  ADMIN_USERID,
+} from "../../constants.js";
 
 jest.mock("mongodb", () => {
   return {
@@ -51,10 +56,8 @@ describe("MongoClient", () => {
       });
     });
 
-    it("should return user through callback if present", async () => {
+    it("should return user if present", async () => {
       const mockRecord = "a user if you can believe it";
-      const successCallbackMock = jest.fn();
-      const failCallbackMock = jest.fn();
 
       MongoClientInstance.mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(true),
@@ -67,22 +70,12 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      await mongoClient.getUser(
-        "someUserId",
-        successCallbackMock,
-        failCallbackMock
-      );
+      const user = await mongoClient.getUser("someUserId");
 
-      expect(successCallbackMock).toHaveBeenCalledWith(mockRecord);
-      expect(failCallbackMock).not.toHaveBeenCalled();
-      expect(logEvent).toHaveBeenCalledWith("User found");
-      expect(logEvent).not.toHaveBeenCalledWith("User not found");
+      expect(user).toEqual(mockRecord);
     });
 
-    it("should call fail callback if NOT present", async () => {
-      const successCallbackMock = jest.fn();
-      const failCallbackMock = jest.fn();
-
+    it("should be undefined if NOT present", async () => {
       MongoClientInstance.mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(true),
         db: jest.fn().mockReturnValue({
@@ -94,16 +87,9 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      await mongoClient.getUser(
-        "someUserId",
-        successCallbackMock,
-        failCallbackMock
-      );
+      const user = await mongoClient.getUser("someUserId");
 
-      expect(failCallbackMock).toHaveBeenCalled();
-      expect(successCallbackMock).not.toHaveBeenCalled();
-      expect(logEvent).toHaveBeenCalledWith("User not found");
-      expect(logEvent).not.toHaveBeenCalledWith("User found");
+      expect(user).toBeUndefined();
     });
 
     it("should delete all users", async () => {
@@ -231,41 +217,85 @@ describe("MongoClient", () => {
   });
 
   describe("Food", () => {
-    it("should insert dailyLog", () => {
-      const mongoDbMock = jest
-        .fn()
-        .mockImplementation(() => "mocked insertOne response");
+    describe("addFood", () => {
+      it("should insert food", async () => {
+        const mongoDbMock = jest
+          .fn()
+          .mockImplementation(() => "mocked insertOne response");
 
-      MongoClientInstance.mockImplementation(() => ({
-        connect: jest.fn().mockResolvedValue(this),
-        db: jest.fn().mockReturnValue({
-          collection: jest.fn().mockReturnValue({
-            insertOne: mongoDbMock,
+        MongoClientInstance.mockImplementation(() => ({
+          connect: jest.fn().mockResolvedValue(this),
+          db: jest.fn().mockReturnValue({
+            collection: jest.fn().mockReturnValue({
+              insertOne: mongoDbMock,
+            }),
           }),
-        }),
-      }));
+        }));
 
-      const mongoClient = new MongoClient();
-      const food = new Food(
-        "someId",
-        "someName",
-        "someCalories",
-        "someProtein",
-        "someCarbs",
-        "someFat",
-        "someServingSize",
-        "someServingUnit"
-      );
+        const mongoClient = new MongoClient();
+        const food = new Food(
+          "someId",
+          "someUserId",
+          "someName",
+          "someCalories",
+          "someProtein",
+          "someCarbs",
+          "someFat",
+          "someServingSize",
+          "someServingUnit",
+          "someAccess",
+          "someDescription",
+          "someImageUrl"
+        );
 
-      mongoClient.insertFood(food);
+        await mongoClient.insertFood(food);
 
-      expect(mongoDbMock).toHaveBeenCalledWith(food);
-      expect(logEvent).toHaveBeenCalledWith("Food inserted");
+        expect(mongoDbMock).toHaveBeenCalledWith(food);
+        expect(logEvent).toHaveBeenCalledWith("Food inserted");
+      });
+    });
+
+    describe("getPublicAndPrivateFoodOptions", () => {
+      it("should query public foods and private foods associated with the provided userId", async () => {
+        const privateFoods = [
+          { userId: "someUserId", access: PRIVATE_ACCESS },
+          { userId: "someUserId", access: PRIVATE_ACCESS },
+          { userId: "someUserId", access: PRIVATE_ACCESS },
+        ];
+        const publicFoods = [
+          { userId: ADMIN_USERID, access: PUBLIC_ACCESS },
+          { userId: ADMIN_USERID, access: PUBLIC_ACCESS },
+          { userId: ADMIN_USERID, access: PUBLIC_ACCESS },
+        ];
+
+        MongoClientInstance.mockImplementation(() => ({
+          connect: jest.fn().mockResolvedValue(this),
+          db: jest.fn().mockReturnValue({
+            collection: jest.fn().mockReturnValue({
+              find: jest.fn().mockReturnValue({
+                toArray: jest
+                  .fn()
+                  .mockReturnValue(
+                    Promise.resolve([...privateFoods, ...publicFoods])
+                  ),
+              }),
+            }),
+          }),
+        }));
+
+        const mongoClient = new MongoClient();
+
+        const foods = await mongoClient.getPublicAndPrivateFoodOptions(
+          "someUserId"
+        );
+
+        expect(foods).toEqual([...privateFoods, ...publicFoods]);
+      });
     });
   });
 
   describe("DailyLog", () => {
-    it("should insert dailyLog", () => {
+    it("should insert dailyLog", async () => {
       const mongoDbMock = jest
         .fn()
         .mockImplementation(() => "mocked insertOne response");
@@ -287,7 +317,7 @@ describe("MongoClient", () => {
         "someNotes"
       );
 
-      mongoClient.insertDailyLog(dailyLog);
+      await mongoClient.insertDailyLog(dailyLog);
 
       expect(mongoDbMock).toHaveBeenCalledWith(dailyLog);
     });
@@ -308,15 +338,12 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      await mongoClient.getDailyLog(
+      const dailyLog = await mongoClient.getDailyLog(
         "someUserId",
-        "11-11-2011",
-        foundCallback,
-        notFoundCallback
+        "11-11-2011"
       );
 
-      expect(foundCallback).toHaveBeenCalledWith(mockRecord);
-      expect(notFoundCallback).not.toHaveBeenCalled();
+      expect(dailyLog).toEqual(mockRecord);
       expect(logEvent).toHaveBeenCalledWith("Daily log found");
       expect(logEvent).not.toHaveBeenCalledWith("Daily log not found");
     });
@@ -336,15 +363,12 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      await mongoClient.getDailyLog(
+      const dailyLog = await mongoClient.getDailyLog(
         "someUserId",
-        "11-11-2011",
-        foundCallback,
-        notFoundCallback
+        "11-11-2011"
       );
 
-      expect(foundCallback).not.toHaveBeenCalled();
-      expect(notFoundCallback).toHaveBeenCalledWith(undefined);
+      expect(dailyLog).toBeUndefined();
       expect(logEvent).not.toHaveBeenCalledWith("Daily log found");
       expect(logEvent).toHaveBeenCalledWith("Daily log not found");
     });
