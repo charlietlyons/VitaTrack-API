@@ -93,8 +93,8 @@ describe("MongoClient", () => {
     });
 
     it("should delete all users", async () => {
-      const callbackMock = jest.fn();
       const deletedCount = 100000;
+      const expectedResponse = { acknowledged: true, deletedCount };
 
       MongoClientInstance.mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(true),
@@ -102,21 +102,37 @@ describe("MongoClient", () => {
           collection: jest.fn().mockReturnValue({
             deleteMany: jest
               .fn()
-              .mockReturnValue(
-                Promise.resolve({ acknowledged: true, deletedCount })
-              ),
+              .mockReturnValue(Promise.resolve(expectedResponse)),
           }),
         }),
       }));
 
       const mongoClient = new MongoClient();
 
-      await mongoClient.deleteAllUsers(callbackMock);
+      const result = await mongoClient.deleteAllUsers();
 
-      expect(callbackMock).toHaveBeenCalled();
+      expect(result).toEqual(expectedResponse);
       expect(logEvent).toHaveBeenCalledWith(
         "User database reset. " + deletedCount + " entries deleted."
       );
+    });
+
+    it("should not log event if not result", async () => {
+      MongoClientInstance.mockImplementation(() => ({
+        connect: jest.fn().mockResolvedValue(true),
+        db: jest.fn().mockReturnValue({
+          collection: jest.fn().mockReturnValue({
+            deleteMany: jest.fn().mockReturnValue(false),
+          }),
+        }),
+      }));
+
+      const mongoClient = new MongoClient();
+
+      const result = await mongoClient.deleteAllUsers();
+
+      expect(result).toBe(false);
+      expect(logEvent).not.toHaveBeenCalled();
     });
   });
 
@@ -158,8 +174,6 @@ describe("MongoClient", () => {
 
     it("should return intake result if result length is greater than 0", async () => {
       const mockRecord = ["mock get intake body HERE"];
-      const foundCallbackMock = jest.fn();
-      const notFoundCallbackMock = jest.fn();
 
       MongoClientInstance.mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(true),
@@ -174,22 +188,13 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      await mongoClient.getUserIntake(
-        "someUserId",
-        "someDayId",
-        foundCallbackMock,
-        notFoundCallbackMock
-      );
+      await mongoClient.getUserIntake("someUserId", "someDayId");
 
       expect(logEvent).toHaveBeenCalledWith("Intake found");
-      expect(foundCallbackMock).toHaveBeenCalledWith(mockRecord);
-      expect(notFoundCallbackMock).not.toHaveBeenCalledWith(mockRecord);
     });
 
     it("should call notFoundCallback if result length is 0", async () => {
       const mockRecord = [];
-      const foundCallbackMock = jest.fn();
-      const notFoundCallbackMock = jest.fn();
 
       MongoClientInstance.mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(true),
@@ -203,16 +208,10 @@ describe("MongoClient", () => {
       }));
 
       const mongoClient = new MongoClient();
-      await mongoClient.getUserIntake(
-        "someUserId",
-        "someDayId",
-        foundCallbackMock,
-        notFoundCallbackMock
-      );
+      const result = await mongoClient.getUserIntake("someUserId", "someDayId");
 
       expect(logEvent).not.toHaveBeenCalledWith("Intake found");
-      expect(notFoundCallbackMock).toHaveBeenCalled();
-      expect(foundCallbackMock).not.toHaveBeenCalled();
+      expect(result).toEqual(mockRecord);
     });
   });
 
@@ -324,8 +323,6 @@ describe("MongoClient", () => {
 
     it("should return dailyLog to foundCallback if present", async () => {
       const mockRecord = "a daily Log if you can believe it";
-      const foundCallback = jest.fn();
-      const notFoundCallback = jest.fn();
 
       MongoClientInstance.mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(true),
@@ -348,10 +345,7 @@ describe("MongoClient", () => {
       expect(logEvent).not.toHaveBeenCalledWith("Daily log not found");
     });
 
-    it("should return result to notFoundCallback if dailyLog not present", async () => {
-      const foundCallback = jest.fn();
-      const notFoundCallback = jest.fn();
-
+    it("should return result if dailyLog not present", async () => {
       MongoClientInstance.mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(true),
         db: jest.fn().mockReturnValue({

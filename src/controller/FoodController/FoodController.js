@@ -8,14 +8,13 @@ class FoodController {
     this.getFoodOptions = this.getFoodOptions.bind(this);
   }
 
-  addFood(req, res) {
+  async addFood(req, res) {
     try {
       if (!RequestBodyValidator.isValidRequestBody(req.body)) {
         res.status(400).send({ message: "Invalid request body." });
       } else {
-        this.foodService.addFood(req.body, () => {
-          res.status(201).send({ message: "Food added successfully." });
-        });
+        await this.foodService.addFood(req.body);
+        res.status(201).send({ message: "Food added successfully." });
       }
     } catch (error) {
       logError(error);

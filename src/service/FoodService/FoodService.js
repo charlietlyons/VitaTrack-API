@@ -6,7 +6,7 @@ class FoodService {
     this.mongoClient = mongoClient;
   }
 
-  addFood(food, callback) {
+  async addFood(food) {
     const foodEntity = new Food(
       crypto.randomUUID(),
       food.userId,
@@ -22,13 +22,12 @@ class FoodService {
       food.imageUrl
     );
 
-    this.mongoClient.insertFood(foodEntity);
-    callback();
+    await this.mongoClient.insertFood(foodEntity);
   }
 
   async getFoodOptions(userId) {
     const foods = await this.mongoClient.getPublicAndPrivateFoodOptions(userId);
-    return foods
+    return foods;
   }
 }
 

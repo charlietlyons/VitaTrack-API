@@ -16,7 +16,6 @@ describe("UserController", () => {
     userController,
     successHandlerSpy,
     failHandlerSpy,
-    sendStatusSpy,
     req,
     res;
 
@@ -25,20 +24,18 @@ describe("UserController", () => {
     userService = jest.mock(UserService.class);
     dailyLogService = jest.mock(DailyLogService.class);
     userController = new UserController(userService, dailyLogService);
-    sendStatusSpy = jest.fn();
-    statusSpy = jest.fn();
     sendSpy = jest.fn();
+    statusSpy = jest.fn().mockImplementation(() => ({
+      send: sendSpy,
+    }));
     req = {
       method: "SOME",
       url: "someUrl",
       body: { token: "some token" },
     };
     res = {
-      sendStatus: sendStatusSpy,
       send: sendSpy,
-      status: jest.fn().mockImplementation(() => ({
-        send: sendSpy,
-      })),
+      status: statusSpy,
     };
   });
 
@@ -114,8 +111,8 @@ describe("UserController", () => {
           body: "some crazy body",
         };
 
-        userService.getUserDetails = jest.fn((email, success, failure) =>
-          success(result)
+        userService.getUserDetails = jest.fn(
+          (email, success, failure) => result
         );
 
         await userController.getUserDetails(req, res, {
@@ -127,9 +124,7 @@ describe("UserController", () => {
       });
 
       it("should call fail handler with 403 if user is not retrieved", async () => {
-        userService.getUserDetails = jest.fn((email, success, failure) =>
-          failure("the kookiest error you've ever seen")
-        );
+        userService.getUserDetails = jest.fn((email) => null);
 
         await userController.getUserDetails(req, res, {
           email: "send it to zoom",
@@ -139,7 +134,7 @@ describe("UserController", () => {
         expect(failHandlerSpy).toHaveBeenCalledWith(
           req,
           res,
-          "the kookiest error you've ever seen",
+          Error("Could not retrieve user details."),
           403
         );
       });
@@ -194,8 +189,8 @@ describe("UserController", () => {
 
     describe("verifyToken", () => {
       it("should return true if token is valid", async () => {
-        userService.verifyToken = jest.fn((token, success, failure) => {
-          success(true);
+        userService.verifyToken = jest.fn((token) => {
+          return true;
         });
 
         await userController.verifyToken(req, res);
@@ -205,8 +200,8 @@ describe("UserController", () => {
       });
 
       it("should handle failure with 403 if token is invalid", async () => {
-        userService.verifyToken = jest.fn((token, success, failure) => {
-          failure("exciting, thrilling error!");
+        userService.verifyToken = jest.fn((token) => {
+          return null;
         });
 
         await userController.verifyToken(req, res);
@@ -215,44 +210,63 @@ describe("UserController", () => {
         expect(failHandlerSpy).toHaveBeenCalledWith(
           req,
           res,
-          "exciting, thrilling error!",
+          Error("Could not verify token"),
           403
         );
       });
 
       it("should handle failure with 500 if token verification fails", async () => {
-        const error = Error("exciting, thrilling error!");
-
-        userService.verifyToken = jest.fn((token, success, failure) => {
+        userService.verifyToken = jest.fn((token) => {
           throw Error("exciting, thrilling error!");
         });
 
         await userController.verifyToken(req, res);
 
         expect(successHandlerSpy).not.toHaveBeenCalled();
-        expect(failHandlerSpy).toHaveBeenCalledWith(req, res, error, 500);
+        expect(failHandlerSpy).toHaveBeenCalledWith(
+          req,
+          res,
+          Error("exciting, thrilling error!"),
+          500
+        );
       });
     });
 
     describe("deleteAllUsers", () => {
-      it("should delete all and return 200", async () => {
-        userService.deleteAll = jest.fn((success, failure) => {
-          success();
+      it("should return true if deleted", async () => {
+        userService.deleteAll = jest.fn((res) => {
+          return true;
         });
 
         await userController.deleteAllUsers(req, res);
 
-        expect(res.sendStatus).toHaveBeenCalledWith(200);
+        expect(statusSpy).toHaveBeenCalledWith(200);
+        expect(sendSpy).toHaveBeenCalled();
       });
 
-      it("should not delete all and return 500", async () => {
-        userService.deleteAll = jest.fn((success, failure) => {
-          failure();
+      it("should return 500 if no deletions", async () => {
+        userService.deleteAll = jest.fn(() => {
+          return false;
         });
 
         await userController.deleteAllUsers(req, res);
 
-        expect(res.sendStatus).toHaveBeenCalledWith(500);
+        expect(statusSpy).toHaveBeenCalledWith(500);
+        expect(sendSpy).toHaveBeenCalled();
+      });
+
+      it("should return 500 if no deletions", async () => {
+        userService.deleteAll = jest.fn(() => {
+          throw Error("big baseballs ruins everything");
+        });
+
+        await userController.deleteAllUsers(req, res);
+
+        expect(logError).toHaveBeenCalledWith(
+          Error("big baseballs ruins everything")
+        );
+        expect(statusSpy).toHaveBeenCalledWith(500);
+        expect(sendSpy).toHaveBeenCalled();
       });
     });
   });

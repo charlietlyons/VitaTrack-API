@@ -11,68 +11,43 @@ jest.mock("crypto", () => {
 
 describe("IntakeService", () => {
   describe("getUserIntake", () => {
+    let userId, dailyLogId, intakeId, date;
+
+    beforeEach(() => {
+      userId = "someUser";
+      dailyLogId = "someDailyLog";
+      intakeId = "someIntake";
+      date = "someDate";
+    });
+
     it("should get user intake if user is real, daily log is present, and intake is plentiful", async () => {
-      const userId = "someUser";
-      const dailyLogId = "someDailyLog";
-      const intakeId = "someIntake";
-      const date = "someDate";
-      const successHandlerSpy = jest.fn();
-      const failHandlerSpy = jest.fn();
       const mongoClient = new MongoClient();
-      const getUserSpy = jest.fn().mockImplementation((user, callback) => {
-        callback({ _id: userId });
+      const getUserMock = jest.fn().mockImplementation((user) => {
+        return { _id: userId };
       });
-      const getDailyLogSpy = jest
-        .fn()
-        .mockImplementation((userId, date, success, failure) => {
-          success({ _id: dailyLogId });
-        });
-      const getIntakeSpy = jest
-        .fn()
-        .mockImplementation((userId, logId, found, notFound) => {
-          found([{ _id: intakeId, quantity: 1 }]);
-        });
-      mongoClient.getUser = getUserSpy;
-      mongoClient.getUserIntake = getIntakeSpy;
-      mongoClient.getDailyLog = getDailyLogSpy;
+      const getDailyLogMock = jest.fn().mockImplementation((userId, date) => {
+        return { _id: dailyLogId };
+      });
+      const getIntakeMock = jest.fn().mockImplementation((userId, logId) => {
+        return [{ _id: intakeId, quantity: 1 }];
+      });
+      mongoClient.getUser = getUserMock;
+      mongoClient.getUserIntake = getIntakeMock;
+      mongoClient.getDailyLog = getDailyLogMock;
 
       const intakeService = new IntakeService(mongoClient);
 
-      intakeService.getUserIntake(
-        userId,
-        date,
-        successHandlerSpy,
-        failHandlerSpy
-      );
-      expect(successHandlerSpy).toHaveBeenCalled();
-      expect(failHandlerSpy).not.toHaveBeenCalled();
-      expect(mongoClient.getUser).toHaveBeenCalledWith(
-        userId,
-        expect.any(Function)
-      );
-      expect(getUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
-      expect(getDailyLogSpy).toHaveBeenCalledWith(
-        userId,
-        date,
-        expect.any(Function),
-        expect.any(Function)
-      );
-      expect(getIntakeSpy).toHaveBeenCalledWith(
-        userId,
-        dailyLogId,
-        expect.any(Function),
-        expect.any(Function)
-      );
+      await intakeService.getUserIntake(userId, date);
+      expect(mongoClient.getUser).toHaveBeenCalledWith(userId);
+      expect(getUserMock).toHaveBeenCalledWith(userId);
+      expect(getDailyLogMock).toHaveBeenCalledWith(userId, date);
+      expect(getIntakeMock).toHaveBeenCalledWith(userId, dailyLogId);
     });
 
-    it("should fail handle if user doesn't exist", () => {
-      const userId = "someUser";
-      const date = "someDate";
-      const successHandlerSpy = jest.fn();
-      const failHandlerSpy = jest.fn();
+    it("should throw error if user doesn't exist", async () => {
       const mongoClient = new MongoClient();
-      const getUserSpy = jest.fn().mockImplementation((user, callback) => {
-        callback(null);
+      const getUserSpy = jest.fn().mockImplementation((user) => {
+        return null;
       });
       const getDailyLogSpy = jest.fn();
       const getIntakeSpy = jest.fn();
@@ -82,152 +57,95 @@ describe("IntakeService", () => {
 
       const intakeService = new IntakeService(mongoClient);
 
-      intakeService.getUserIntake(
-        userId,
-        date,
-        successHandlerSpy,
-        failHandlerSpy
-      );
+      await expect(
+        intakeService.getUserIntake(userId, date)
+      ).rejects.toThrowError("Could not get user data for userId: someUser");
 
-      expect(failHandlerSpy).toHaveBeenCalled();
-      expect(successHandlerSpy).not.toHaveBeenCalled();
-      expect(mongoClient.getUser).toHaveBeenCalledWith(
-        userId,
-        expect.any(Function)
-      );
-      expect(getUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
+      expect(mongoClient.getUser).toHaveBeenCalledWith(userId);
+      expect(getUserSpy).toHaveBeenCalledWith(userId);
       expect(getDailyLogSpy).not.toHaveBeenCalled();
       expect(getIntakeSpy).not.toHaveBeenCalled();
     });
 
-    it("should fail handle if daily log doesn't exist", () => {
+    it("should fail handle if daily log doesn't exist", async () => {
       const userId = "someUser";
       const date = "someDate";
-      const successHandlerSpy = jest.fn();
-      const failHandlerSpy = jest.fn();
       const mongoClient = new MongoClient();
-      const getUserSpy = jest.fn().mockImplementation((user, callback) => {
-        callback({ _id: userId });
+      const getUserSpy = jest.fn().mockImplementation((user) => {
+        return { _id: userId };
       });
-      const getDailyLogSpy = jest
-        .fn()
-        .mockImplementation((userId, date, success, failure) => {
-          failure();
-        });
-      const getIntakeSpy = jest.fn();
+      const getDailyLogSpy = jest.fn().mockImplementation((userId, date) => {
+        return null;
+      });
       mongoClient.getUser = getUserSpy;
-      mongoClient.getUserIntake = getIntakeSpy;
       mongoClient.getDailyLog = getDailyLogSpy;
-
       const intakeService = new IntakeService(mongoClient);
 
-      intakeService.getUserIntake(
-        userId,
-        date,
-        successHandlerSpy,
-        failHandlerSpy
+      await expect(
+        intakeService.getUserIntake(userId, date)
+      ).rejects.toThrowError(
+        `Could not get dailyLog for userId: ${userId} on ${date}`
       );
 
-      expect(failHandlerSpy).toHaveBeenCalled();
-      expect(successHandlerSpy).not.toHaveBeenCalled();
-      expect(mongoClient.getUser).toHaveBeenCalledWith(
-        userId,
-        expect.any(Function)
-      );
-      expect(getUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
-      expect(getDailyLogSpy).toHaveBeenCalledWith(
-        userId,
-        date,
-        expect.any(Function),
-        expect.any(Function)
-      );
-      expect(getIntakeSpy).not.toHaveBeenCalled();
+      expect(mongoClient.getUser).toHaveBeenCalledWith(userId);
+      expect(getUserSpy).toHaveBeenCalledWith(userId);
+      expect(getDailyLogSpy).toHaveBeenCalledWith(userId, date);
     });
 
-    it("should fail handle if user intake doesn't exist", () => {
+    it("should fail handle if user intake doesn't exist", async () => {
       const userId = "someUser";
       const date = "someDate";
       const dailyLogId = "someDailyLog";
-      const intakeId = "someIntake";
-      const successHandlerSpy = jest.fn();
-      const failHandlerSpy = jest.fn();
       const mongoClient = new MongoClient();
-      const getUserSpy = jest.fn().mockImplementation((user, callback) => {
-        callback({ _id: userId });
+      const getUserSpy = jest.fn().mockImplementation((user) => {
+        return { _id: userId };
       });
-      const getDailyLogSpy = jest
-        .fn()
-        .mockImplementation((userId, date, success, failure) => {
-          success({ _id: dailyLogId });
-        });
-      const getIntakeSpy = jest
-        .fn()
-        .mockImplementation((userId, logId, found, notFound) => {
-          notFound();
-        });
+      const getDailyLogSpy = jest.fn().mockImplementation((userId, date) => {
+        return { _id: dailyLogId };
+      });
+      const getIntakeSpy = jest.fn().mockImplementation((userId, logId) => {
+        return null;
+      });
       mongoClient.getUser = getUserSpy;
       mongoClient.getUserIntake = getIntakeSpy;
       mongoClient.getDailyLog = getDailyLogSpy;
 
       const intakeService = new IntakeService(mongoClient);
 
-      intakeService.getUserIntake(
-        userId,
-        date,
-        successHandlerSpy,
-        failHandlerSpy
-      );
+      await expect(
+        intakeService.getUserIntake(userId, date)
+      ).rejects.toThrowError(`Could not get intake data for userId: ${userId}`);
 
-      expect(failHandlerSpy).toHaveBeenCalled();
-      expect(successHandlerSpy).not.toHaveBeenCalled();
-      expect(mongoClient.getUser).toHaveBeenCalledWith(
-        userId,
-        expect.any(Function)
-      );
-      expect(getUserSpy).toHaveBeenCalledWith(userId, expect.any(Function));
-      expect(getDailyLogSpy).toHaveBeenCalledWith(
-        userId,
-        date,
-        expect.any(Function),
-        expect.any(Function)
-      );
-      expect(getIntakeSpy).toHaveBeenCalledWith(
-        userId,
-        dailyLogId,
-        expect.any(Function),
-        expect.any(Function)
-      );
+      expect(mongoClient.getUser).toHaveBeenCalledWith(userId);
+      expect(getUserSpy).toHaveBeenCalledWith(userId);
+      expect(getDailyLogSpy).toHaveBeenCalledWith(userId, date);
+      expect(getIntakeSpy).toHaveBeenCalledWith(userId, dailyLogId);
     });
   });
 
   describe("addIntake", () => {
-    it("should add intake when user and daily log is present", () => {
+    it("should add intake when user and daily log is present", async () => {
       const userId = "someUserId",
         logId = "logId",
         foodId = "foodId";
-      const successSpy = jest.fn(),
-        failSpy = jest.fn();
 
       const expected = new Intake("8", userId, logId, foodId, 1);
       const mongoClient = new MongoClient();
-      mongoClient.getUser = jest.fn().mockImplementation((user, callback) => {
-        callback({ _id: userId });
+      mongoClient.getUser = jest.fn().mockImplementation((user) => {
+        return { _id: userId };
       });
-      mongoClient.getDailyLog = jest
-        .fn()
-        .mockImplementation((userId, date, success, failure) => {
-          success({ _id: logId });
-        });
+      mongoClient.getDailyLog = jest.fn().mockImplementation((userId, date) => {
+        return { _id: logId };
+      });
       mongoClient.insertIntake = jest.fn();
       const intakeService = new IntakeService(mongoClient);
 
-      intakeService.addIntake(
-        { foodId: foodId, quantity: 1 },
-        successSpy,
-        failSpy
-      );
+      const insertedEntity = await intakeService.addIntake({
+        foodId: foodId,
+        quantity: 1,
+      });
       expect(mongoClient.insertIntake).toHaveBeenCalledWith(expected);
-      expect(successSpy).toHaveBeenCalled();
+      expect(insertedEntity).toEqual(expected);
     });
   });
 });

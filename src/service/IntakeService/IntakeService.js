@@ -6,69 +6,71 @@ export default class IntakeService {
     this.mongoClient = mongoClient;
   }
 
-  // TODO: refactor to avoid callback hell
-  getUserIntake(userId, date, successHandler, failHandler) {
-    this.mongoClient.getUser(userId, (user) => {
-      if (user) {
-        this.mongoClient.getDailyLog(
-          user._id,
-          date,
-          (dailyLog) => {
-            this.mongoClient.getUserIntake(
-              user._id,
-              dailyLog._id,
-              (result) => {
-                // TODO: pull food data from DB
-                const payload = [];
-                result.forEach((intake) => {
-                  payload.push({
-                    _id: intake._id,
-                    userId: user._id,
-                    quantity: intake.quantity,
-                    name: "Banana",
-                    description: "A banana",
-                    calories: 100,
-                    protein: 10,
-                    carbs: 10,
-                    fat: 10,
-                    servingSize: 100,
-                    serving_unit: "g",
-                    imgUrl: "",
-                    isCustom: true,
-                    isPrivate: false,
-                  });
-                });
-                successHandler(payload);
-              },
-              failHandler
-            );
-          },
-          failHandler
-        );
-      } else {
-        failHandler();
-      }
+  async getUserIntake(userId, date) {
+    // TODO: shouldn't this be email?
+    const user = await this.getUserDataOrThrow(userId);
+    const dailyLog = await this.getDailyLogDataOrThrow(user._id, date);
+    const intakes = await this.getIntakesDataOrThrow(user._id, dailyLog._id);
+
+    const payload = [];
+    await intakes.forEach((intake) => {
+      payload.push({
+        _id: intake._id,
+        userId: user._id,
+        quantity: intake.quantity,
+        name: "Banana",
+        description: "A banana",
+        calories: 100,
+        protein: 10,
+        carbs: 10,
+        fat: 10,
+        servingSize: 100,
+        serving_unit: "g",
+        imgUrl: "",
+        isCustom: true,
+        isPrivate: false,
+      });
     });
+    return payload;
   }
 
-  addIntake(intake, successHandler, failHandler) {
-    this.mongoClient.getUser(intake.email, (user) => {
-      this.mongoClient.getDailyLog(
-        user._id,
-        new Date().toJSON().slice(0, 10),
-        (dailyLog) => {
-          const intakeEntity = new Intake(
-            crypto.randomUUID(),
-            user._id,
-            dailyLog._id,
-            intake.foodId,
-            intake.quantity
-          );
-          this.mongoClient.insertIntake(intakeEntity);
-          successHandler();
-        },
-        failHandler
-      );
-    });
+  async addIntake(intake) {
+    const user = await this.getUserDataOrThrow(intake.email);
+    const dailyLog = await this.getDailyLogDataOrThrow(
+      user._id,
+      new Date().toJSON().slice(0, 10)
+    );
+    const intakeEntity = new Intake(
+      crypto.randomUUID(),
+      user._id,
+      dailyLog._id,
+      intake.foodId,
+      intake.quantity
+    );
+    await this.mongoClient.insertIntake(intakeEntity);
+    return intakeEntity;
+  }
+
+  async getUserDataOrThrow(userId) {
+    const user = await this.mongoClient.getUser(userId);
+
+    if (!user) throw Error(`Could not get user data for userId: ${userId}`);
+    return user;
+  }
+
+  async getDailyLogDataOrThrow(userId, date) {
+    const dailyLog = await this.mongoClient.getDailyLog(userId, date);
+
+    if (!dailyLog)
+      throw Error(`Could not get dailyLog for userId: ${userId} on ${date}`);
+    return dailyLog;
+  }
+
+  async getIntakesDataOrThrow(userId, dayId) {
+    const intakes = await this.mongoClient.getUserIntake(userId, dayId);
+
+    if (!intakes)
+      throw Error(`Could not get intake data for userId: ${userId}`);
+    return intakes;
   }
 }

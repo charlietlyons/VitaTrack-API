@@ -23,13 +23,13 @@ export default class MongoClient {
     logEvent("User inserted");
   }
 
-  insertDailyLog(dailyLog) {
-    this.client.db(DB_NAME).collection("daystat").insertOne(dailyLog);
+  async insertDailyLog(dailyLog) {
+    await this.client.db(DB_NAME).collection("daystat").insertOne(dailyLog);
     logEvent("Daily Log inserted");
   }
 
-  insertIntake(intake) {
-    this.client.db(DB_NAME).collection("intake").insertOne(intake);
+  async insertIntake(intake) {
+    await this.client.db(DB_NAME).collection("intake").insertOne(intake);
     logEvent("Intake inserted");
   }
 
@@ -40,7 +40,10 @@ export default class MongoClient {
 
   async getPublicAndPrivateFoodOptions(userId) {
     const query = {
-      $or: [{ access: "PUBLIC_ACCESS" }, { access: "PRIVATE_ACCESS", userId: userId }],
+      $or: [
+        { access: "PUBLIC_ACCESS" },
+        { access: "PRIVATE_ACCESS", userId: userId },
+      ],
     };
 
     const foods = await this.client
@@ -51,21 +54,20 @@ export default class MongoClient {
     return foods;
   }
 
-  getUserIntake(userId, dayId, foundCallback, notFoundCallback) {
+  async getUserIntake(userId, dayId) {
     const query = { dayId: dayId, userId: userId };
-    this.client
+    const result = await this.client
       .db(DB_NAME)
       .collection("intake")
       .find(query)
-      .toArray()
-      .then((result) => {
-        if (result.length > 0) {
-          logEvent("Intake found");
-          foundCallback(result);
-        } else {
-          notFoundCallback();
-        }
-      });
+      .toArray();
+
+    if (result && result.length > 0) {
+      logEvent("Intake found");
+      return result;
+    } else {
+      return [];
+    }
   }
 
   async getDailyLog(userId, date) {
@@ -94,16 +96,17 @@ export default class MongoClient {
     return user;
   }
 
-  deleteAllUsers(callback) {
-    this.client
+  async deleteAllUsers() {
+    const result = await this.client
       .db(DB_NAME)
       .collection("user")
-      .deleteMany({})
-      .then((result) => {
-        logEvent(
-          "User database reset. " + result.deletedCount + " entries deleted."
-        );
-        callback();
-      });
+      .deleteMany({});
+
+    if (result) {
+      logEvent(
+        "User database reset. " + result.deletedCount + " entries deleted."
+      );
+    } 
+    return result;
   }
 }

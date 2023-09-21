@@ -20,13 +20,19 @@ export default class UserController {
     }
   };
 
-  getUserDetails = (req, res, data) => {
+  getUserDetails = async (req, res, data) => {
     try {
-      this.userService.getUserDetails(
-        data.email,
-        (result) => this.successHandler(req, res, result),
-        (error) => this.failHandler(req, res, error, 403)
-      );
+      const result = await this.userService.getUserDetails(data.email);
+      if (result) {
+        this.successHandler(req, res, result);
+      } else {
+        this.failHandler(
+          req,
+          res,
+          new Error("Could not retrieve user details."),
+          403
+        );
+      }
     } catch (e) {
       this.failHandler(req, res, e, 500);
     }
@@ -36,41 +42,48 @@ export default class UserController {
   verifyUser = async (req, res) => {
     try {
       const token = await this.userService.verifyUser(req.body);
-
-      this.dailyLogService.prepareDailyLog(req.body.email);
-      this.successHandler(req, res, JSON.stringify({ token: token }));
+      await this.dailyLogService.prepareDailyLog(req.body.email);
+      await this.successHandler(req, res, JSON.stringify({ token: token }));
     } catch (e) {
-      this.failHandler(req, res, e, 500);
+      await this.failHandler(req, res, e, 500);
     }
   };
 
-  verifyToken = (req, res) => {
+  verifyToken = async (req, res) => {
     try {
-      this.userService.verifyToken(
-        req.body.token,
-        (result) => this.successHandler(result),
-        (error) => this.failHandler(req, res, error, 403)
-      );
+      const result = await this.userService.verifyToken(req.body.token);
+      if (result) {
+        await this.successHandler(result);
+      } else {
+        this.failHandler(req, res, Error("Could not verify token"), 403);
+      }
     } catch (e) {
       this.failHandler(req, res, e, 500);
     }
   };
 
-  deleteAllUsers = (req, res) => {
-    this.userService.deleteAll(
-      () => res.sendStatus(200),
-      () => res.sendStatus(500)
-    );
+  deleteAllUsers = async (req, res) => {
+    try {
+      const result = await this.userService.deleteAll(res);
+      if (result) {
+        await res.status(200).send();
+      } else {
+        throw Error("No result from deletion query.");
+      }
+    } catch (err) {
+      logError(err);
+      await res.status(500).send();
+    }
   };
 
-  successHandler = (req, res, payload) => {
+  successHandler = async (req, res, payload) => {
     logRequest(req.method, req.url, 200);
-    res.send(payload);
+    await res.send(payload);
   };
 
-  failHandler = (req, res, error, errorCode) => {
+  failHandler = async (req, res, error, errorCode) => {
     logRequest(req.method, req.url, errorCode);
     logError(error);
-    res.status(errorCode).send();
+    await res.status(errorCode).send();
   };
 }

@@ -7,8 +7,8 @@ class DailyLogService {
     this.mongoClient = mongoClient;
   }
 
-  prepareDailyLog(user) {
-    const result = this.mongoClient.getUser(user);
+  prepareDailyLog = async (user) => {
+    const result = await this.mongoClient.getUser(user);
     const today = new Date().toJSON().slice(0, 10);
 
     const dailyLogInitialPayload = new DailyLog(
@@ -18,7 +18,7 @@ class DailyLogService {
       ""
     );
 
-    const existingDailyLog = this.mongoClient.getDailyLog(result._id, today);
+    const existingDailyLog = await this.mongoClient.getDailyLog(result._id, today);
 
     if (existingDailyLog) {
       return existingDailyLog;

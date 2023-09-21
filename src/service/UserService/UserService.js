@@ -18,7 +18,7 @@ export default class UserService {
     this.userTransformer = new UserTransformer();
   }
 
-  createUser = async (userData) => {
+  async createUser(userData) {
     if (!UserValidator.validateRegisterUserPayload(userData)) {
       logError("Invalid user data");
     } else {
@@ -33,22 +33,21 @@ export default class UserService {
         return user;
       }
     }
-  };
+  }
 
-  getUserDetails(user, successHandler, failHandler) {
-    this.mongoClient.getUser(user, (result) => {
-      if (result) {
-        const accountDetails = {
-          first: result._firstName,
-          last: result._lastName,
-          email: result._email,
-          phone: result._phone,
-        };
-        successHandler(accountDetails);
-      } else {
-        failHandler("User does not exist");
-      }
-    });
+  async getUserDetails(user) {
+    const result = await this.mongoClient.getUser(user);
+    if (result) {
+      const accountDetails = {
+        first: result._firstName,
+        last: result._lastName,
+        email: result._email,
+        phone: result._phone,
+      };
+      return accountDetails;
+    } else {
+      throw Error("User does not exist");
+    }
   }
 
   async verifyUser(loginFormData) {
@@ -61,28 +60,22 @@ export default class UserService {
     }
   }
 
-  verifyToken(token, successHandler, failHandler) {
-    jwt.verify(token, ACCESS_TOKEN_SECRET, (error, data) => {
-      if (error) {
-        failHandler(error);
-      } else {
-        successHandler(data);
-      }
-    });
-  }
-
-  // TODO: get rid of this when you have live data
-  deleteAll(successHandler, failHandler) {
-    try {
-      this.mongoClient.deleteAllUsers(successHandler);
-    } catch (e) {
-      logError(e);
-      failHandler();
+  async verifyToken(token) {
+    const decoded = await jwt.verify(token, ACCESS_TOKEN_SECRET);
+    if (decoded) {
+      return decoded;
+    } else {
+      throw Error("We were not able to verify the token.");
     }
   }
 
-  checkPasswordForToken(loginFormData, result) {
-    return bcrypt
+  // TODO: get rid of this when you have live data
+  async deleteAll(res) {
+    return await this.mongoClient.deleteAllUsers();
+  }
+
+  async checkPasswordForToken(loginFormData, result) {
+    return await bcrypt
       .compare(loginFormData.password, result._password)
       .then((match) => {
         if (match) {
@@ -105,10 +98,10 @@ export default class UserService {
 
   async registerHandler(user) {
     return await bcrypt.genSalt(parseInt(HASH_SALT_ROUNDS)).then((salt) => {
-      bcrypt.hash(user._password, salt).then((hash) => {
+      bcrypt.hash(user._password, salt).then(async (hash) => {
         user.salt = salt;
         user._password = hash;
-        this.mongoClient.insertUser(user);
+        await this.mongoClient.insertUser(user);
         // TODO: Email Verification
       });
     });
