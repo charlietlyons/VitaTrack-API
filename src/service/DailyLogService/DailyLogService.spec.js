@@ -68,7 +68,7 @@ describe("DailyLogService", () => {
 
     const mongoClient = new MongoClient();
     mongoClient.getUser = jest.fn().mockImplementation((user) => {
-      return {};
+      return null;
     });
     mongoClient.insertDailyLog = insertMock;
 

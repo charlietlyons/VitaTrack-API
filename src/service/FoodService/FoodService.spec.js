@@ -35,10 +35,9 @@ describe("Food Service", () => {
 
     const foodService = new FoodService(mongoInstance);
 
-    await foodService.addFood(foodEntity, callbackMock);
+    await foodService.addFood(foodEntity);
 
     expect(insertMock).toHaveBeenCalledWith(foodEntity);
-    expect(callbackMock).toHaveBeenCalled();
   });
 
   it("should return a list of public foods and custom foods corresponding with userId", async () => {

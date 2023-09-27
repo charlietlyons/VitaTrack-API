@@ -4,6 +4,7 @@ import FoodService from "../../service/FoodService/FoodService";
 import FoodController from "./FoodController";
 import { logError } from "../../util/Logger";
 import RequestBodyValidator from "../../validators/RequestBodyValidator";
+import { stat } from "fs";
 
 jest.mock("../../util/Logger.js", () => ({
   logError: jest.fn(),
@@ -42,20 +43,20 @@ describe("FoodController", () => {
       servingUnit: "g",
     };
 
-    it("should call food service to add new food", () => {
-      const mockAddFood = jest.fn().mockImplementation((body, callback) => {
-        callback();
+    it("should call food service to add new food", async () => {
+      const mockAddFood = jest.fn().mockImplementation((body) => {
+        return true
       });
 
       foodService.addFood = mockAddFood;
 
       const foodController = new FoodController(foodService);
 
-      foodController.addFood({ body: payload }, res);
+      await foodController.addFood({ body: payload }, res);
 
-      expect(mockAddFood).toHaveBeenCalledWith(payload, expect.any(Function));
-      expect(foodController).toBeDefined();
-      expect(sendSpy).toHaveBeenCalled();
+      expect(mockAddFood).toHaveBeenCalledWith(payload);
+      expect(sendSpy).toHaveBeenCalledWith({message: "Food added successfully."});
+      expect(statusSpy).toBeCalledWith(201);
       expect(logError).not.toHaveBeenCalled();
     });
 
@@ -80,7 +81,7 @@ describe("FoodController", () => {
 
     it("should return 500 when an error is caught in food service", async () => {
       const requestValidatorSpy = jest.fn().mockReturnValue(true);
-      const mockAddFood = jest.fn().mockImplementation((body, callback) => {
+      const mockAddFood = jest.fn().mockImplementation((body) => {
         throw new Error("hate this food");
       });
 
@@ -91,7 +92,7 @@ describe("FoodController", () => {
 
       foodController.addFood({ body: payload }, res);
 
-      expect(mockAddFood).toHaveBeenCalledWith(payload, expect.any(Function));
+      expect(mockAddFood).toHaveBeenCalledWith(payload);
       expect(foodController).toBeDefined();
       expect(logError).toBeCalled();
       expect(statusSpy).toHaveBeenCalledWith(500);
@@ -100,7 +101,7 @@ describe("FoodController", () => {
 
     it("should return Internal Server Error when an error message is not provided", async () => {
       const requestValidatorSpy = jest.fn().mockReturnValue(true);
-      const mockAddFood = jest.fn().mockImplementation((body, callback) => {
+      const mockAddFood = jest.fn().mockImplementation((body) => {
         throw new Error();
       });
 
@@ -111,7 +112,7 @@ describe("FoodController", () => {
 
       foodController.addFood({ body: payload }, res);
 
-      expect(mockAddFood).toHaveBeenCalledWith(payload, expect.any(Function));
+      expect(mockAddFood).toHaveBeenCalledWith(payload);
       expect(logError).toBeCalled();
       expect(statusSpy).toHaveBeenCalledWith(500);
       expect(sendSpy).toHaveBeenCalledWith({

@@ -7,32 +7,33 @@ export default class IntakeService {
   }
 
   async getUserIntake(userId, date) {
-    // TODO: shouldn't this be email?
     const user = await this.getUserDataOrThrow(userId);
     const dailyLog = await this.getDailyLogDataOrThrow(user._id, date);
     const intakes = await this.getIntakesDataOrThrow(user._id, dailyLog._id);
 
     const payload = [];
-    await intakes.forEach((intake) => {
+    for (const intake of intakes) {
+      // TODO: can this be made into one call
+      const foodData = await this.mongoClient.getFoodDataByIntakeId(intake.foodId);
       payload.push({
         _id: intake._id,
         userId: user._id,
         quantity: intake.quantity,
-        name: "Banana",
-        description: "A banana",
-        calories: 100,
-        protein: 10,
-        carbs: 10,
-        fat: 10,
-        servingSize: 100,
-        serving_unit: "g",
-        imgUrl: "",
-        isCustom: true,
-        isPrivate: false,
+        name: foodData.name,
+        description: foodData.description,
+        calories: foodData.calories * intake.quantity,
+        protein: foodData.protein * intake.quantity,
+        carbs: foodData.carbs * intake.quantity,
+        fat: foodData.fat * intake.quantity,
+        servingSize: foodData.servingSize,
+        servingUnit: foodData.servingUnit,
+        imgUrl: foodData.imgUrl,
+        access: foodData.access,
       });
-    });
+    }
     return payload;
   }
+  
 
   async addIntake(intake) {
     const user = await this.getUserDataOrThrow(intake.email);

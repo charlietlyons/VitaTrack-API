@@ -31,9 +31,28 @@ describe("IntakeService", () => {
       const getIntakeMock = jest.fn().mockImplementation((userId, logId) => {
         return [{ _id: intakeId, quantity: 1 }];
       });
+
+      const getFoodDataByIntakeIdMock = jest.fn().mockImplementation((foodId) => {
+        return {
+          _id: foodId,
+          userId: "someUserId",
+          name: "My foot",
+          calories: 1000,
+          protein: 500,
+          carbs: 0,
+          fat: .5,
+          servingSize: 1,
+          servingUnit: "foot",
+          access: "PUBLIC_ACCESS",
+          description: "It's my foot.",
+          imageUrl: "www.imageofmyfoot.com"
+        }
+      })
+
       mongoClient.getUser = getUserMock;
       mongoClient.getUserIntake = getIntakeMock;
       mongoClient.getDailyLog = getDailyLogMock;
+      mongoClient.getFoodDataByIntakeId = getFoodDataByIntakeIdMock;
 
       const intakeService = new IntakeService(mongoClient);
 

@@ -17,7 +17,9 @@ describe("UserController", () => {
     successHandlerSpy,
     failHandlerSpy,
     req,
-    res;
+    res,
+    sendSpy,
+    statusSpy;
 
   beforeEach(() => {
     jest.resetAllMocks();

@@ -70,6 +70,22 @@ export default class MongoClient {
     }
   }
 
+  async getFoodDataByIntakeId(intakeId) {
+    const query = { _id: intakeId }
+
+    const foodData = await this.client
+      .db(DB_NAME)
+      .collection("food")
+      .findOne(query)
+      
+    if (foodData) {
+      logEvent("Food data found");
+    } else {
+      logEvent("Food data not found");
+    }
+    return foodData;
+  }
+
   async getDailyLog(userId, date) {
     const query = { userId: userId, date: date };
 

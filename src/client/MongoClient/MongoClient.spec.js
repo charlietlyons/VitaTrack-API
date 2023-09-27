@@ -254,6 +254,67 @@ describe("MongoClient", () => {
       });
     });
 
+    describe("getFoodDataByIntakeId", () => {
+      it("should get food data by id", async () => {
+        const expectedData = {
+                        "_id": "2e064075-6fad-4ffd-a608-907e3191663e",
+                        "userId": "someUserId",
+                        "name": "Feet",
+                        "calories": 119,
+                        "protein": 3,
+                        "carbs": 10,
+                        "fat": 1,
+                        "servingSize": 3,
+                        "servingUnit": "g",
+                        "access": "PUBLIC_ACCESS",
+                        "description": "The king of all foods",
+                        "imageUrl": ""
+                      }
+        
+        MongoClientInstance.mockImplementation(() => ({
+          connect: jest.fn().mockResolvedValue(this),
+          db: jest.fn().mockReturnValue({
+            collection: jest.fn().mockReturnValue({
+              findOne: jest.fn()
+                .mockReturnValue(
+                  Promise.resolve(
+                    expectedData
+                  )
+                ),
+            }),
+          }),
+        }));
+      
+      const mongoClient = new MongoClient();
+
+      const foodData = await mongoClient.getFoodDataByIntakeId("anythingReally")
+
+      expect(foodData).toEqual(expectedData)
+      })
+
+      it("should log that food data was not found", async () => {
+        MongoClientInstance.mockImplementation(() => ({
+          connect: jest.fn().mockResolvedValue(this),
+          db: jest.fn().mockReturnValue({
+            collection: jest.fn().mockReturnValue({
+              findOne: jest.fn()
+                .mockReturnValue(
+                  Promise.resolve(
+                    null
+                  )
+                ),
+            }),
+          }),
+        }));
+      
+      const mongoClient = new MongoClient();
+
+      await mongoClient.getFoodDataByIntakeId("anythingReally")
+
+      expect(logEvent).toHaveBeenCalledWith("Food data not found")
+      })
+    });
+
     describe("getPublicAndPrivateFoodOptions", () => {
       it("should query public foods and private foods associated with the provided userId", async () => {
         const privateFoods = [
