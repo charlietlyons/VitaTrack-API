@@ -1,3 +1,4 @@
+import { PRIVATE_ACCESS, PUBLIC_ACCESS } from "../../constants.js";
 import Food from "../../data/Food.js";
 import crypto from "crypto";
 
@@ -17,7 +18,7 @@ class FoodService {
       food.fat,
       food.servingSize,
       food.servingUnit,
-      food.access,
+      food.access === PUBLIC_ACCESS ? PUBLIC_ACCESS : PRIVATE_ACCESS,
       food.description,
       food.imageUrl
     );

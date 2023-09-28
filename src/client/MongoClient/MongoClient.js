@@ -10,6 +10,7 @@ const DB_NAME = process.env.DB_NAME;
 
 const uri = `mongodb+srv://${DB_USER}:${DB_PASSWORD}@cluster0.4fcf2.mongodb.net/?retryWrites=true&w=majority`;
 
+// TODO: this should only have GET, POST, DELETE, and PATCH methods
 export default class MongoClient {
   constructor() {
     this.client = new MongoClientInstance(uri, {

@@ -57,11 +57,12 @@ export default class UserService {
       return token;
     } else {
       logError("User does not exist");
+      return "";
     }
   }
 
   async verifyToken(token) {
-    const decoded = await jwt.verify(token, ACCESS_TOKEN_SECRET);
+    const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET);
     if (decoded) {
       return decoded;
     } else {

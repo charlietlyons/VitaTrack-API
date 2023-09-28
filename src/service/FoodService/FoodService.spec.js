@@ -14,7 +14,6 @@ jest.mock("crypto", () => {
 describe("Food Service", () => {
   it("should insert food via mongoClient", async () => {
     const insertMock = jest.fn();
-    const callbackMock = jest.fn();
     const foodEntity = new Food(
       "8",
       "someUserId",
@@ -66,5 +65,34 @@ describe("Food Service", () => {
     const foodOptions = await foodService.getFoodOptions("someUserId");
 
     expect(foodOptions).toEqual([...privateFoods, ...publicFoods]);
+  });
+
+  it("should set default access to private", async () => {
+    const insertMock = jest.fn();
+    const foodEntity = new Food(
+      "8",
+      "someUserId",
+      "gross food",
+      100,
+      10,
+      10,
+      10,
+      100,
+      "g",
+      "addd",
+      "some food",
+      "url.com"
+    );
+    const mongoInstance = new MongoClient();
+
+    mongoInstance.insertFood = insertMock;
+
+    const foodService = new FoodService(mongoInstance);
+
+    await foodService.addFood(foodEntity);
+
+    foodEntity.access = PRIVATE_ACCESS;
+
+    expect(insertMock).toHaveBeenCalledWith(foodEntity);
   });
 });
