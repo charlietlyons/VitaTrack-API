@@ -32,22 +32,24 @@ describe("IntakeService", () => {
         return [{ _id: intakeId, quantity: 1 }];
       });
 
-      const getFoodDataByIntakeIdMock = jest.fn().mockImplementation((foodId) => {
-        return {
-          _id: foodId,
-          userId: "someUserId",
-          name: "My foot",
-          calories: 1000,
-          protein: 500,
-          carbs: 0,
-          fat: .5,
-          servingSize: 1,
-          servingUnit: "foot",
-          access: "PUBLIC_ACCESS",
-          description: "It's my foot.",
-          imageUrl: "www.imageofmyfoot.com"
-        }
-      })
+      const getFoodDataByIntakeIdMock = jest
+        .fn()
+        .mockImplementation((foodId) => {
+          return {
+            _id: foodId,
+            userId: "someUserId",
+            name: "My foot",
+            calories: 1000,
+            protein: 500,
+            carbs: 0,
+            fat: 0.5,
+            servingSize: 1,
+            servingUnit: "foot",
+            access: "PUBLIC_ACCESS",
+            description: "It's my foot.",
+            imageUrl: "www.imageofmyfoot.com",
+          };
+        });
 
       mongoClient.getUser = getUserMock;
       mongoClient.getUserIntake = getIntakeMock;
@@ -139,6 +141,23 @@ describe("IntakeService", () => {
       expect(getUserSpy).toHaveBeenCalledWith(userId);
       expect(getDailyLogSpy).toHaveBeenCalledWith(userId, date);
       expect(getIntakeSpy).toHaveBeenCalledWith(userId, dailyLogId);
+    });
+  });
+
+  describe("deleteIntake", () => {
+    it("should return intake", async () => {
+      const mongoClient = new MongoClient();
+      const deleteIntakeMock = jest.fn().mockImplementation((user) => {
+        return true;
+      });
+
+      mongoClient.deleteIntake = deleteIntakeMock;
+      const intakeService = new IntakeService(mongoClient);
+
+      const result = await intakeService.deleteIntake("someIntakeId");
+
+      expect(result).toBe(true);
+      expect(deleteIntakeMock).toHaveBeenCalled();
     });
   });
 

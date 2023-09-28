@@ -126,4 +126,53 @@ describe("IntakeController", () => {
       expect(statusSpy).toHaveBeenCalledWith(500);
     });
   });
+
+  describe("Delete Intake", () => {
+    it("should return 204 if delete successful", async () => {
+      const deleteIntakeMock = jest.fn((intake) => true);
+
+      intakeService.deleteIntake = deleteIntakeMock;
+
+      intakeController = new IntakeController(intakeService);
+      await intakeController.deleteIntake(
+        { params: { id: "someId" } },
+        { status: statusSpy }
+      );
+
+      expect(deleteIntakeMock).toHaveBeenCalledWith("someId");
+      expect(statusSpy).toHaveBeenCalledWith(204);
+    });
+
+    it("should return 400 if delete unsuccessful", async () => {
+      const deleteIntakeMock = jest.fn((intake) => false);
+
+      intakeService.deleteIntake = deleteIntakeMock;
+
+      intakeController = new IntakeController(intakeService);
+      await intakeController.deleteIntake(
+        { params: { id: "someId" } },
+        { status: statusSpy }
+      );
+
+      expect(deleteIntakeMock).toHaveBeenCalledWith("someId");
+      expect(statusSpy).toHaveBeenCalledWith(400);
+    });
+
+    it("should return 500 if error", async () => {
+      const deleteIntakeMock = jest.fn((intake) => {
+        throw Error("bad times");
+      });
+
+      intakeService.deleteIntake = deleteIntakeMock;
+
+      intakeController = new IntakeController(intakeService);
+      await intakeController.deleteIntake(
+        { params: { id: "someId" } },
+        { status: statusSpy }
+      );
+
+      expect(deleteIntakeMock).toHaveBeenCalledWith("someId");
+      expect(statusSpy).toHaveBeenCalledWith(500);
+    });
+  });
 });

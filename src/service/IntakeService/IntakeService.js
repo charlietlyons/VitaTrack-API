@@ -14,7 +14,9 @@ export default class IntakeService {
     const payload = [];
     for (const intake of intakes) {
       // TODO: can this be made into one call
-      const foodData = await this.mongoClient.getFoodDataByIntakeId(intake.foodId);
+      const foodData = await this.mongoClient.getFoodDataByIntakeId(
+        intake.foodId
+      );
       payload.push({
         _id: intake._id,
         userId: user._id,
@@ -33,7 +35,6 @@ export default class IntakeService {
     }
     return payload;
   }
-  
 
   async addIntake(intake) {
     const user = await this.getUserDataOrThrow(intake.email);
@@ -50,6 +51,10 @@ export default class IntakeService {
     );
     await this.mongoClient.insertIntake(intakeEntity);
     return intakeEntity;
+  }
+
+  async deleteIntake(intakeId) {
+    return await this.mongoClient.deleteIntake(intakeId);
   }
 
   async getUserDataOrThrow(userId) {

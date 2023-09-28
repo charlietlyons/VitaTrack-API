@@ -6,8 +6,8 @@ dotenv.config();
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 const Authenticator = {
-  authenticate(req, res, next) {
-    const authHeader = req.headers.authorization;
+  async authenticate(req, res, next) {
+    const authHeader = await req.headers.authorization;
 
     if (!authHeader) {
       logError("No token");

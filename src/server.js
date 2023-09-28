@@ -74,8 +74,12 @@ router.post("/verify-token", userController.verifyToken);
 router.get("/intake", (req, res) => {
   Authenticator.authenticate(req, res, intakeController.getIntake);
 });
+// TODO: change to /intake
 router.post("/add-intake", (req, res) => {
   Authenticator.authenticate(req, res, intakeController.addIntake);
+});
+router.delete("/intake/:id", (req, res) => {
+  Authenticator.authenticate(req, res, intakeController.deleteIntake);
 });
 app.use(router);
 

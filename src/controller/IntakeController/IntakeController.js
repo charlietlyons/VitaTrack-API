@@ -5,6 +5,7 @@ export default class IntakeController {
     this.intakeService = intakeService;
     this.addIntake = this.addIntake.bind(this);
     this.getIntake = this.getIntake.bind(this);
+    this.deleteIntake = this.deleteIntake.bind(this);
   }
 
   async getIntake(req, res, data) {
@@ -26,17 +27,31 @@ export default class IntakeController {
 
   async addIntake(req, res, data) {
     try {
-      const result = await this.intakeService.addIntake(
-        {
-          email: data.email,
-          ...req.body,
-        })
+      const result = await this.intakeService.addIntake({
+        email: data.email,
+        ...req.body,
+      });
 
-        if (result) {
-          res.status(201).send()
-        } else {
-          res.status(400).send()
-        }
+      if (result) {
+        res.status(201).send();
+      } else {
+        res.status(400).send();
+      }
+    } catch (error) {
+      logError(error);
+      res.status(500).send();
+    }
+  }
+
+  async deleteIntake(req, res, data) {
+    try {
+      const result = await this.intakeService.deleteIntake(req.params.id);
+
+      if (result) {
+        res.status(204).send();
+      } else {
+        res.status(400).send();
+      }
     } catch (error) {
       logError(error);
       res.status(500).send();

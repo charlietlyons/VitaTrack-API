@@ -1,6 +1,6 @@
 import { MongoClient as MongoClientInstance } from "mongodb";
 import dotenv from "dotenv";
-import { logEvent } from "../../util/Logger.js";
+import { logEvent, logError } from "../../util/Logger.js";
 
 dotenv.config();
 
@@ -71,13 +71,13 @@ export default class MongoClient {
   }
 
   async getFoodDataByIntakeId(intakeId) {
-    const query = { _id: intakeId }
+    const query = { _id: intakeId };
 
     const foodData = await this.client
       .db(DB_NAME)
       .collection("food")
-      .findOne(query)
-      
+      .findOne(query);
+
     if (foodData) {
       logEvent("Food data found");
     } else {
@@ -112,6 +112,18 @@ export default class MongoClient {
     return user;
   }
 
+  async deleteIntake(intakeId) {
+    const result = await this.client
+      .db(DB_NAME)
+      .collection("intake")
+      .deleteOne({ _id: intakeId });
+
+    if (!result) {
+      logError(`Could not delete intake of id: ${intakeId}`);
+    }
+    return result;
+  }
+
   async deleteAllUsers() {
     const result = await this.client
       .db(DB_NAME)
@@ -122,7 +134,7 @@ export default class MongoClient {
       logEvent(
         "User database reset. " + result.deletedCount + " entries deleted."
       );
-    } 
+    }
     return result;
   }
 }

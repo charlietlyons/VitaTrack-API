@@ -55,10 +55,10 @@ export default class UserController {
       if (result) {
         await this.successHandler(result);
       } else {
-        this.failHandler(req, res, Error("Could not verify token"), 403);
+        await this.failHandler(req, res, Error("Could not verify token"), 403);
       }
     } catch (e) {
-      this.failHandler(req, res, e, 500);
+      await this.failHandler(req, res, e, 500);
     }
   };
 
