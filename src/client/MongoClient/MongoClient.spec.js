@@ -138,117 +138,168 @@ describe("MongoClient", () => {
   });
 
   describe("Intake", () => {
-    it("should insert intake", () => {
-      const mongoDbMock = jest
-        .fn()
-        .mockImplementation(() => "mocked insertOne response");
+    describe("insert", () => {
+      it("should insert intake", () => {
+        const mongoDbMock = jest
+          .fn()
+          .mockImplementation(() => "mocked insertOne response");
 
-      MongoClientInstance.mockImplementation(() => ({
-        connect: jest.fn().mockResolvedValue(true),
-        db: jest.fn().mockReturnValue({
-          collection: jest.fn().mockReturnValue({
-            insertOne: mongoDbMock,
+        MongoClientInstance.mockImplementation(() => ({
+          connect: jest.fn().mockResolvedValue(true),
+          db: jest.fn().mockReturnValue({
+            collection: jest.fn().mockReturnValue({
+              insertOne: mongoDbMock,
+            }),
           }),
-        }),
-      }));
+        }));
 
-      const intake = new Intake(
-        "someId",
-        "someUserId",
-        "someDayId",
-        "someFoodId",
-        9000
-      );
+        const intake = new Intake(
+          "someId",
+          "someUserId",
+          "someDayId",
+          "someFoodId",
+          9000
+        );
 
-      const mongoClient = new MongoClient();
+        const mongoClient = new MongoClient();
 
-      mongoClient.insertIntake(intake);
+        mongoClient.insertIntake(intake);
 
-      expect(mongoDbMock).toHaveBeenCalledWith({
-        _id: "someId",
-        userId: "someUserId",
-        dayId: "someDayId",
-        foodId: "someFoodId",
-        quantity: 9000,
+        expect(mongoDbMock).toHaveBeenCalledWith({
+          _id: "someId",
+          userId: "someUserId",
+          dayId: "someDayId",
+          foodId: "someFoodId",
+          quantity: 9000,
+        });
       });
     });
 
-    it("should return intake result if result length is greater than 0", async () => {
-      const mockRecord = ["mock get intake body HERE"];
+    describe("get", () => {
+      it("should return intake result if result length is greater than 0", async () => {
+        const mockRecord = ["mock get intake body HERE"];
 
-      MongoClientInstance.mockImplementation(() => ({
-        connect: jest.fn().mockResolvedValue(true),
-        db: jest.fn().mockReturnValue({
-          collection: jest.fn().mockReturnValue({
-            find: jest.fn().mockReturnValue({
-              toArray: jest.fn().mockReturnValue(Promise.resolve(mockRecord)),
+        MongoClientInstance.mockImplementation(() => ({
+          connect: jest.fn().mockResolvedValue(true),
+          db: jest.fn().mockReturnValue({
+            collection: jest.fn().mockReturnValue({
+              find: jest.fn().mockReturnValue({
+                toArray: jest.fn().mockReturnValue(Promise.resolve(mockRecord)),
+              }),
             }),
           }),
-        }),
-      }));
+        }));
 
-      const mongoClient = new MongoClient();
+        const mongoClient = new MongoClient();
 
-      await mongoClient.getUserIntake("someUserId", "someDayId");
+        await mongoClient.getUserIntake("someUserId", "someDayId");
 
-      expect(logEvent).toHaveBeenCalledWith("Intake found");
-    });
+        expect(logEvent).toHaveBeenCalledWith("Intake found");
+      });
 
-    it("should call notFoundCallback if result length is 0", async () => {
-      const mockRecord = [];
+      it("should call notFoundCallback if result length is 0", async () => {
+        const mockRecord = [];
 
-      MongoClientInstance.mockImplementation(() => ({
-        connect: jest.fn().mockResolvedValue(true),
-        db: jest.fn().mockReturnValue({
-          collection: jest.fn().mockReturnValue({
-            find: jest.fn().mockReturnValue({
-              toArray: jest.fn().mockReturnValue(Promise.resolve(mockRecord)),
+        MongoClientInstance.mockImplementation(() => ({
+          connect: jest.fn().mockResolvedValue(true),
+          db: jest.fn().mockReturnValue({
+            collection: jest.fn().mockReturnValue({
+              find: jest.fn().mockReturnValue({
+                toArray: jest.fn().mockReturnValue(Promise.resolve(mockRecord)),
+              }),
             }),
           }),
-        }),
-      }));
+        }));
 
-      const mongoClient = new MongoClient();
-      const result = await mongoClient.getUserIntake("someUserId", "someDayId");
+        const mongoClient = new MongoClient();
+        const result = await mongoClient.getUserIntake(
+          "someUserId",
+          "someDayId"
+        );
 
-      expect(logEvent).not.toHaveBeenCalledWith("Intake found");
-      expect(result).toEqual(mockRecord);
+        expect(logEvent).not.toHaveBeenCalledWith("Intake found");
+        expect(result).toEqual(mockRecord);
+      });
     });
 
-    it("should delete intake associated with id", async () => {
-      MongoClientInstance.mockImplementation(() => ({
-        connect: jest.fn().mockResolvedValue(true),
-        db: jest.fn().mockReturnValue({
-          collection: jest.fn().mockReturnValue({
-            deleteOne: jest.fn().mockReturnValue(true),
+    describe("delete", () => {
+      it("should delete intake associated with id", async () => {
+        MongoClientInstance.mockImplementation(() => ({
+          connect: jest.fn().mockResolvedValue(true),
+          db: jest.fn().mockReturnValue({
+            collection: jest.fn().mockReturnValue({
+              deleteOne: jest.fn().mockReturnValue(true),
+            }),
           }),
-        }),
-      }));
+        }));
 
-      const mongoClient = new MongoClient();
-      const result = await mongoClient.deleteIntake("someIntakeId");
+        const mongoClient = new MongoClient();
+        const result = await mongoClient.deleteIntake("someIntakeId");
 
-      expect(logError).not.toHaveBeenCalled();
-      expect(result).toEqual(true);
+        expect(logError).not.toHaveBeenCalled();
+        expect(result).toEqual(true);
+      });
+
+      it("should log error and return false when intake not deleted", async () => {
+        MongoClientInstance.mockImplementation(() => ({
+          connect: jest.fn().mockResolvedValue(true),
+          db: jest.fn().mockReturnValue({
+            collection: jest.fn().mockReturnValue({
+              deleteOne: jest.fn().mockReturnValue(false),
+            }),
+          }),
+        }));
+
+        const mongoClient = new MongoClient();
+        const result = await mongoClient.deleteIntake("someIntakeId");
+
+        expect(logError).toHaveBeenCalledWith(
+          "Could not delete intake of id: someIntakeId"
+        );
+        expect(result).toEqual(false);
+      });
     });
 
-    it("should log error and return false when intake not deleted", async () => {
-      MongoClientInstance.mockImplementation(() => ({
-        connect: jest.fn().mockResolvedValue(true),
-        db: jest.fn().mockReturnValue({
-          collection: jest.fn().mockReturnValue({
-            deleteOne: jest.fn().mockReturnValue(false),
+    describe("update", () => {
+      it("should logEvent intake inserted if successful", async () => {
+        MongoClientInstance.mockImplementation(() => ({
+          connect: jest.fn().mockResolvedValue(true),
+          db: jest.fn().mockReturnValue({
+            collection: jest.fn().mockReturnValue({
+              updateOne: jest.fn().mockReturnValue(true),
+            }),
           }),
-        }),
-      }));
+        }));
 
-      const mongoClient = new MongoClient();
-      const result = await mongoClient.deleteIntake("someIntakeId");
+        const mongoClient = new MongoClient();
 
-      expect(logError).toHaveBeenCalledWith(
-        "Could not delete intake of id: someIntakeId"
-      );
-      expect(result).toEqual(false);
+        const response = await mongoClient.updateIntake({
+          id: "someId",
+          quantity: 2,
+        });
+
+        expect(response).toEqual(true);
+      });
+
+      it("should not logEvent intake inserted if unsuccessful", async () => {
+        MongoClientInstance.mockImplementation(() => ({
+          connect: jest.fn().mockResolvedValue(true),
+          db: jest.fn().mockReturnValue({
+            collection: jest.fn().mockReturnValue({
+              updateOne: jest.fn().mockReturnValue(false),
+            }),
+          }),
+        }));
+
+        const mongoClient = new MongoClient();
+
+        const response = await mongoClient.updateIntake({
+          id: "someId",
+          quantity: 2,
+        });
+
+        expect(response).toEqual(false);
+      });
     });
   });
 

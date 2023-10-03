@@ -57,6 +57,10 @@ export default class IntakeService {
     return await this.mongoClient.deleteIntake(intakeId);
   }
 
+  async updateIntake(intakeUpdate) {
+    return await this.mongoClient.updateIntake(intakeUpdate);
+  }
+
   async getUserDataOrThrow(userId) {
     const user = await this.mongoClient.getUser(userId);
 

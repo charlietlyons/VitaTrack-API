@@ -34,6 +34,21 @@ export default class MongoClient {
     logEvent("Intake inserted");
   }
 
+  async updateIntake(intake) {
+    return await this.client
+      .db(DB_NAME)
+      .collection("intake")
+      .updateOne(
+        { _id: intake.id },
+        {
+          $set: {
+            foodId: intake.foodId,
+            quantity: intake.quantity,
+          },
+        }
+      );
+  }
+
   async insertFood(food) {
     await this.client.db(DB_NAME).collection("food").insertOne(food);
     logEvent("Food inserted");

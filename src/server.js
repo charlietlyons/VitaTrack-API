@@ -80,6 +80,9 @@ router.post("/intake", (req, res) => {
 router.delete("/intake/:id", (req, res) => {
   Authenticator.authenticate(req, res, intakeController.deleteIntake);
 });
+router.patch("/intake/", (req, res) => {
+  Authenticator.authenticate(req, res, intakeController.updateIntake);
+});
 app.use(router);
 
 export default app;

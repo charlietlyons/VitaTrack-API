@@ -175,4 +175,51 @@ describe("IntakeController", () => {
       expect(statusSpy).toHaveBeenCalledWith(500);
     });
   });
+
+  describe("Update Intake", () => {
+    it("should return 204 if update was a success", async () => {
+      intakeService.updateIntake = jest.fn().mockImplementation(() => {
+        return true;
+      });
+
+      await intakeController.updateIntake(
+        { query: { quantity: 2 } },
+        { status: statusSpy },
+        {}
+      );
+
+      expect(statusSpy).toHaveBeenCalledWith(204);
+      expect(sendSpy).toHaveBeenCalled();
+    });
+
+    it("should return 400 if update was unsuccessful", async () => {
+      intakeService.updateIntake = jest.fn().mockImplementation(() => {
+        return false;
+      });
+
+      await intakeController.updateIntake(
+        { query: { quantity: 2 } },
+        { status: statusSpy },
+        {}
+      );
+
+      expect(statusSpy).toHaveBeenCalledWith(400);
+      expect(sendSpy).toHaveBeenCalled();
+    });
+
+    it("should return 500 if an error occurred during update", async () => {
+      intakeService.updateIntake = jest.fn().mockImplementation(() => {
+        throw Error("");
+      });
+
+      await intakeController.updateIntake(
+        { query: { quantity: 2 } },
+        { status: statusSpy },
+        {}
+      );
+
+      expect(statusSpy).toHaveBeenCalledWith(500);
+      expect(sendSpy).toHaveBeenCalled();
+    });
+  });
 });

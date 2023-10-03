@@ -1,6 +1,7 @@
 import MongoClient from "../../client/MongoClient/MongoClient";
 import IntakeService from "./IntakeService";
 import Intake from "../../data/Intake";
+import UserService from "../UserService/UserService";
 
 jest.mock("crypto", () => {
   return {
@@ -184,6 +185,34 @@ describe("IntakeService", () => {
       });
       expect(mongoClient.insertIntake).toHaveBeenCalledWith(expected);
       expect(insertedEntity).toEqual(expected);
+    });
+  });
+
+  describe("updateIntake", () => {
+    it("should return true if update successful", async () => {
+      const mongoClient = new MongoClient();
+      mongoClient.updateIntake = jest.fn().mockImplementation((user) => {
+        return true;
+      });
+
+      const intakeService = new IntakeService(mongoClient);
+
+      const response = await intakeService.updateIntake({ quantity: 3 });
+
+      expect(response).toBe(true);
+    });
+
+    it("should return true if update successful", async () => {
+      const mongoClient = new MongoClient();
+      mongoClient.updateIntake = jest.fn().mockImplementation((user) => {
+        return false;
+      });
+
+      const intakeService = new IntakeService(mongoClient);
+
+      const response = await intakeService.updateIntake({ quantity: 3 });
+
+      expect(response).toBe(false);
     });
   });
 });
