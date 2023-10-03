@@ -5,6 +5,7 @@ import UserValidator from "../../validators/UserValidator/UserValidator";
 import UserService from "./UserService.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { USER_TABLE } from "../../constants.js";
 
 jest.mock("crypto", () => {
   return {
@@ -359,16 +360,16 @@ describe("UserService", () => {
 
       jest.spyOn(bcrypt, "genSalt").mockResolvedValue("someSalt");
       jest.spyOn(bcrypt, "hash").mockResolvedValue("someHash");
-      const insertMock = jest.fn();
+      const postMock = jest.fn();
       const mongoClient = new MongoClient();
-      mongoClient.insertUser = insertMock;
+      mongoClient.post = postMock;
       const userService = new UserService(mongoClient);
 
       user.salt = "someSalt";
       user.password = "someHash";
 
       await userService.registerHandler(user);
-      expect(insertMock).toHaveBeenCalledWith(user);
+      expect(postMock).toHaveBeenCalledWith(USER_TABLE, user);
     });
   });
 });

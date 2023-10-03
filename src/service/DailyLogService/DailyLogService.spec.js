@@ -1,4 +1,5 @@
 import MongoClient from "../../client/MongoClient/MongoClient";
+import { DAYSTAT_TABLE } from "../../constants";
 import DailyLog from "../../data/DailyLog";
 import { logError, logEvent } from "../../util/Logger";
 import DailyLogService from "./DailyLogService";
@@ -23,24 +24,24 @@ describe("DailyLogService", () => {
   });
 
   it("should not prepare the daily log if some user and a daily log for today exist", async () => {
-    const insertMock = jest.fn();
+    const postMock = jest.fn();
 
     const mongoClient = new MongoClient();
-    mongoClient.getUser = jest.fn().mockImplementation((user) => {
+    mongoClient.getManyByQuery = jest.fn().mockImplementation((user) => {
       return { _id: "someId" };
     });
-    mongoClient.insertDailyLog = insertMock;
-    mongoClient.getDailyLog = jest.fn().mockImplementation((id, today) => {
+    mongoClient.post = postMock;
+    mongoClient.getManyByQuery = jest.fn().mockImplementation((id, today) => {
       return {};
     });
     const dailyLogService = new DailyLogService(mongoClient);
     await dailyLogService.prepareDailyLog("someUser");
 
-    expect(insertMock).not.toHaveBeenCalled();
+    expect(postMock).not.toHaveBeenCalled();
   });
 
   it("should prepare the daily log if some user exists and daily log for today does not", async () => {
-    const insertMock = jest.fn();
+    const postMock = jest.fn();
     const dailyLogEntity = new DailyLog(
       "8",
       new Date().toJSON().slice(0, 10),
@@ -49,32 +50,34 @@ describe("DailyLogService", () => {
     );
 
     const mongoClient = new MongoClient();
-    mongoClient.getUser = jest.fn().mockImplementation((user, callback) => {
-      return { _id: "someId" };
-    });
-    mongoClient.getDailyLog = jest.fn().mockImplementation((id, today) => {
+    mongoClient.getManyByQuery = jest
+      .fn()
+      .mockImplementation((user, callback) => {
+        return { _id: "someId" };
+      });
+    mongoClient.getManyByQuery = jest.fn().mockImplementation((id, today) => {
       return undefined;
     });
-    mongoClient.insertDailyLog = insertMock;
+    mongoClient.post = postMock;
 
     const dailyLogService = new DailyLogService(mongoClient);
     await dailyLogService.prepareDailyLog("someUser");
 
-    expect(insertMock).toHaveBeenCalledWith(dailyLogEntity);
+    expect(postMock).toHaveBeenCalledWith(DAYSTAT_TABLE, dailyLogEntity);
   });
 
   it("should do absolutely nothing if no user", async () => {
-    const insertMock = jest.fn();
+    const postMock = jest.fn();
 
     const mongoClient = new MongoClient();
     mongoClient.getUser = jest.fn().mockImplementation((user) => {
       return null;
     });
-    mongoClient.insertDailyLog = insertMock;
+    mongoClient.post = postMock;
 
     const dailyLogService = new DailyLogService(mongoClient);
     await dailyLogService.prepareDailyLog("someUser");
 
-    expect(insertMock).not.toHaveBeenCalled();
+    expect(postMock).not.toHaveBeenCalled();
   });
 });

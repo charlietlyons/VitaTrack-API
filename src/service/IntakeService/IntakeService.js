@@ -1,5 +1,11 @@
 import crypto from "crypto";
 import Intake from "../../data/Intake.js";
+import {
+  DAYSTAT_TABLE,
+  FOOD_TABLE,
+  INTAKE_TABLE,
+  USER_TABLE,
+} from "../../constants.js";
 
 export default class IntakeService {
   constructor(mongoClient) {
@@ -11,29 +17,33 @@ export default class IntakeService {
     const dailyLog = await this.getDailyLogDataOrThrow(user._id, date);
     const intakes = await this.getIntakesDataOrThrow(user._id, dailyLog._id);
 
-    const payload = [];
-    for (const intake of intakes) {
-      // TODO: can this be made into one call
-      const foodData = await this.mongoClient.getFoodDataByIntakeId(
-        intake.foodId
-      );
-      payload.push({
-        _id: intake._id,
-        userId: user._id,
-        quantity: intake.quantity,
-        name: foodData.name,
-        description: foodData.description,
-        calories: foodData.calories * intake.quantity,
-        protein: foodData.protein * intake.quantity,
-        carbs: foodData.carbs * intake.quantity,
-        fat: foodData.fat * intake.quantity,
-        servingSize: foodData.servingSize,
-        servingUnit: foodData.servingUnit,
-        imgUrl: foodData.imgUrl,
-        access: foodData.access,
-      });
+    if (intakes) {
+      const payload = [];
+      for (const intake of intakes) {
+        // TODO: can this be made into one call
+        const foodData = await this.mongoClient.getOneById(
+          FOOD_TABLE,
+          intake.foodId
+        );
+        payload.push({
+          _id: intake._id,
+          userId: user._id,
+          quantity: intake.quantity,
+          name: foodData.name,
+          description: foodData.description,
+          calories: foodData.calories * intake.quantity,
+          protein: foodData.protein * intake.quantity,
+          carbs: foodData.carbs * intake.quantity,
+          fat: foodData.fat * intake.quantity,
+          servingSize: foodData.servingSize,
+          servingUnit: foodData.servingUnit,
+          imgUrl: foodData.imgUrl,
+          access: foodData.access,
+        });
+      }
+      return payload;
     }
-    return payload;
+    return [];
   }
 
   async addIntake(intake) {
@@ -49,27 +59,30 @@ export default class IntakeService {
       intake.foodId,
       intake.quantity
     );
-    await this.mongoClient.insertIntake(intakeEntity);
+    await this.mongoClient.post(INTAKE_TABLE, intakeEntity);
     return intakeEntity;
   }
 
   async deleteIntake(intakeId) {
-    return await this.mongoClient.deleteIntake(intakeId);
+    return await this.mongoClient.delete(INTAKE_TABLE, intakeId);
   }
 
   async updateIntake(intakeUpdate) {
-    return await this.mongoClient.updateIntake(intakeUpdate);
+    return await this.mongoClient.patch(INTAKE_TABLE, intakeUpdate);
   }
 
   async getUserDataOrThrow(userId) {
-    const user = await this.mongoClient.getUser(userId);
+    const user = await this.mongoClient.getOneById(USER_TABLE, userId);
 
     if (!user) throw Error(`Could not get user data for userId: ${userId}`);
     return user;
   }
 
   async getDailyLogDataOrThrow(userId, date) {
-    const dailyLog = await this.mongoClient.getDailyLog(userId, date);
+    const dailyLog = await this.mongoClient.getOneByQuery(DAYSTAT_TABLE, {
+      userId: userId,
+      date: date,
+    });
 
     if (!dailyLog)
       throw Error(`Could not get dailyLog for userId: ${userId} on ${date}`);
@@ -77,7 +90,10 @@ export default class IntakeService {
   }
 
   async getIntakesDataOrThrow(userId, dayId) {
-    const intakes = await this.mongoClient.getUserIntake(userId, dayId);
+    const intakes = await this.mongoClient.getManyByQuery(INTAKE_TABLE, {
+      userId: userId,
+      date: dayId,
+    });
 
     if (!intakes)
       throw Error(`Could not get intake data for userId: ${userId}`);

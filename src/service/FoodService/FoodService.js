@@ -1,4 +1,4 @@
-import { PRIVATE_ACCESS, PUBLIC_ACCESS } from "../../constants.js";
+import { FOOD_TABLE, PRIVATE_ACCESS, PUBLIC_ACCESS } from "../../constants.js";
 import Food from "../../data/Food.js";
 import crypto from "crypto";
 
@@ -23,11 +23,14 @@ class FoodService {
       food.imageUrl
     );
 
-    await this.mongoClient.insertFood(foodEntity);
+    await this.mongoClient.post(FOOD_TABLE, foodEntity);
   }
 
   async getFoodOptions(userId) {
-    const foods = await this.mongoClient.getPublicAndPrivateFoodOptions(userId);
+    const foods = await this.mongoClient.getManyByQuery(FOOD_TABLE, [
+      { access: "PUBLIC_ACCESS" },
+      { access: "PRIVATE_ACCESS", userId: userId },
+    ]);
     return foods;
   }
 }

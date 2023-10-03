@@ -8,6 +8,10 @@ import {
   PRIVATE_ACCESS,
   PUBLIC_ACCESS,
   ADMIN_USERID,
+  USER_TABLE,
+  INTAKE_TABLE,
+  FOOD_TABLE,
+  DAYSTAT_TABLE,
 } from "../../constants.js";
 
 jest.mock("mongodb", () => {
@@ -46,7 +50,7 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      mongoClient.insertUser({
+      mongoClient.post(USER_TABLE, {
         email: "email",
         password: "password",
       });
@@ -71,7 +75,9 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      const user = await mongoClient.getUser("someUserId");
+      const user = await mongoClient.getOneByQuery(USER_TABLE, {
+        email: "someUserId",
+      });
 
       expect(user).toEqual(mockRecord);
     });
@@ -88,7 +94,9 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      const user = await mongoClient.getUser("someUserId");
+      const user = await mongoClient.getOneByQuery(USER_TABLE, {
+        email: "someUserId",
+      });
 
       expect(user).toBeUndefined();
     });
@@ -110,7 +118,7 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      const result = await mongoClient.deleteAllUsers();
+      const result = await mongoClient.deleteAll(USER_TABLE);
 
       expect(result).toEqual(expectedResponse);
       expect(logEvent).toHaveBeenCalledWith(
@@ -163,7 +171,7 @@ describe("MongoClient", () => {
 
         const mongoClient = new MongoClient();
 
-        mongoClient.insertIntake(intake);
+        mongoClient.post(INTAKE_TABLE, intake);
 
         expect(mongoDbMock).toHaveBeenCalledWith({
           _id: "someId",
@@ -191,8 +199,10 @@ describe("MongoClient", () => {
         }));
 
         const mongoClient = new MongoClient();
-
-        await mongoClient.getUserIntake("someUserId", "someDayId");
+        await mongoClient.getManyByQuery(INTAKE_TABLE, {
+          userId: "someUserId",
+          dayId: "someDayId",
+        });
 
         expect(logEvent).toHaveBeenCalledWith("Intake found");
       });
@@ -212,10 +222,10 @@ describe("MongoClient", () => {
         }));
 
         const mongoClient = new MongoClient();
-        const result = await mongoClient.getUserIntake(
-          "someUserId",
-          "someDayId"
-        );
+        const result = await mongoClient.getManyByQuery(INTAKE_TABLE, {
+          userId: "someUserId",
+          dayId: "someDayId",
+        });
 
         expect(logEvent).not.toHaveBeenCalledWith("Intake found");
         expect(result).toEqual(mockRecord);
@@ -234,7 +244,7 @@ describe("MongoClient", () => {
         }));
 
         const mongoClient = new MongoClient();
-        const result = await mongoClient.deleteIntake("someIntakeId");
+        const result = await mongoClient.delete(INTAKE_TABLE, "someIntakeId");
 
         expect(logError).not.toHaveBeenCalled();
         expect(result).toEqual(true);
@@ -335,7 +345,7 @@ describe("MongoClient", () => {
           "someImageUrl"
         );
 
-        await mongoClient.insertFood(food);
+        await mongoClient.post(FOOD_TABLE, food);
 
         expect(mongoDbMock).toHaveBeenCalledWith(food);
         expect(logEvent).toHaveBeenCalledWith("Food inserted");
@@ -425,9 +435,10 @@ describe("MongoClient", () => {
 
         const mongoClient = new MongoClient();
 
-        const foods = await mongoClient.getPublicAndPrivateFoodOptions(
-          "someUserId"
-        );
+        const foods = await mongoClient.getManyByQuery(FOOD_TABLE, [
+          { access: "PUBLIC_ACCESS" },
+          { access: "PRIVATE_ACCESS", userId: "someUserId" },
+        ]);
 
         expect(foods).toEqual([...privateFoods, ...publicFoods]);
       });
@@ -457,7 +468,7 @@ describe("MongoClient", () => {
         "someNotes"
       );
 
-      await mongoClient.insertDailyLog(dailyLog);
+      await mongoClient.post(DAYSTAT_TABLE, dailyLog);
 
       expect(mongoDbMock).toHaveBeenCalledWith(dailyLog);
     });

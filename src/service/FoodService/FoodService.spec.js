@@ -13,7 +13,7 @@ jest.mock("crypto", () => {
 
 describe("Food Service", () => {
   it("should insert food via mongoClient", async () => {
-    const insertMock = jest.fn();
+    const postMock = jest.fn();
     const foodEntity = new Food(
       "8",
       "someUserId",
@@ -30,13 +30,13 @@ describe("Food Service", () => {
     );
     const mongoInstance = new MongoClient();
 
-    mongoInstance.insertFood = insertMock;
+    mongoInstance.post = postMock;
 
     const foodService = new FoodService(mongoInstance);
 
     await foodService.addFood(foodEntity);
 
-    expect(insertMock).toHaveBeenCalledWith(foodEntity);
+    expect(postMock).toHaveBeenCalledWith(foodEntity);
   });
 
   it("should return a list of public foods and custom foods corresponding with userId", async () => {
@@ -51,14 +51,13 @@ describe("Food Service", () => {
       { userId: ADMIN_USERID, access: PUBLIC_ACCESS },
     ];
 
-    const getPublicAndPrivateFoodOptionsMock = jest.fn(() => {
+    const getManyByQueryMock = jest.fn(() => {
       return [...privateFoods, ...publicFoods];
     });
 
     const mongoInstance = new MongoClient();
 
-    mongoInstance.getPublicAndPrivateFoodOptions =
-      getPublicAndPrivateFoodOptionsMock;
+    mongoInstance.getManyByQuery = getManyByQueryMock;
 
     const foodService = new FoodService(mongoInstance);
 
@@ -68,7 +67,7 @@ describe("Food Service", () => {
   });
 
   it("should set default access to private", async () => {
-    const insertMock = jest.fn();
+    const postMock = jest.fn();
     const foodEntity = new Food(
       "8",
       "someUserId",
@@ -85,7 +84,7 @@ describe("Food Service", () => {
     );
     const mongoInstance = new MongoClient();
 
-    mongoInstance.insertFood = insertMock;
+    mongoInstance.post = postMock;
 
     const foodService = new FoodService(mongoInstance);
 
@@ -93,6 +92,6 @@ describe("Food Service", () => {
 
     foodEntity.access = PRIVATE_ACCESS;
 
-    expect(insertMock).toHaveBeenCalledWith(foodEntity);
+    expect(postMock).toHaveBeenCalledWith(foodEntity);
   });
 });

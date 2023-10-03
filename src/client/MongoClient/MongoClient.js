@@ -10,7 +10,6 @@ const DB_NAME = process.env.DB_NAME;
 
 const uri = `mongodb+srv://${DB_USER}:${DB_PASSWORD}@cluster0.4fcf2.mongodb.net/?retryWrites=true&w=majority`;
 
-// TODO: this should only have GET, POST, DELETE, and PATCH methods
 export default class MongoClient {
   constructor() {
     this.client = new MongoClientInstance(uri, {
@@ -19,136 +18,92 @@ export default class MongoClient {
     });
   }
 
-  async insertUser(user) {
-    await this.client.db(DB_NAME).collection("user").insertOne(user);
-    logEvent("User inserted");
-  }
+  async getOneById(tableName, id) {
+    const query = { _id: id };
 
-  async insertDailyLog(dailyLog) {
-    await this.client.db(DB_NAME).collection("daystat").insertOne(dailyLog);
-    logEvent("Daily Log inserted");
-  }
-
-  async insertIntake(intake) {
-    await this.client.db(DB_NAME).collection("intake").insertOne(intake);
-    logEvent("Intake inserted");
-  }
-
-  async updateIntake(intake) {
-    return await this.client
+    const data = await this.client
       .db(DB_NAME)
-      .collection("intake")
-      .updateOne(
-        { _id: intake.id },
-        {
-          $set: {
-            foodId: intake.foodId,
-            quantity: intake.quantity,
-          },
-        }
-      );
-  }
-
-  async insertFood(food) {
-    await this.client.db(DB_NAME).collection("food").insertOne(food);
-    logEvent("Food inserted");
-  }
-
-  async getPublicAndPrivateFoodOptions(userId) {
-    const query = {
-      $or: [
-        { access: "PUBLIC_ACCESS" },
-        { access: "PRIVATE_ACCESS", userId: userId },
-      ],
-    };
-
-    const foods = await this.client
-      .db(DB_NAME)
-      .collection("food")
-      .find(query)
-      .toArray();
-    return foods;
-  }
-
-  async getUserIntake(userId, dayId) {
-    const query = { dayId: dayId, userId: userId };
-    const result = await this.client
-      .db(DB_NAME)
-      .collection("intake")
-      .find(query)
-      .toArray();
-
-    if (result && result.length > 0) {
-      logEvent("Intake found");
-      return result;
-    } else {
-      return [];
-    }
-  }
-
-  async getFoodDataByIntakeId(intakeId) {
-    const query = { _id: intakeId };
-
-    const foodData = await this.client
-      .db(DB_NAME)
-      .collection("food")
+      .collection(tableName)
       .findOne(query);
 
-    if (foodData) {
-      logEvent("Food data found");
+    if (data) {
+      logEvent(`${tableName} data found with id: ${id}`);
     } else {
-      logEvent("Food data not found");
+      logEvent(`${tableName} data not found with id: ${id}`);
     }
-    return foodData;
+    return data;
   }
 
-  async getDailyLog(userId, date) {
-    const query = { userId: userId, date: date };
-
+  async getOneByQuery(tableName, query) {
     const result = await this.client
       .db(DB_NAME)
-      .collection("daystat")
+      .collection(tableName)
       .findOne(query);
 
     if (result) {
-      logEvent("Daily log found");
+      logEvent(`${tableName} data found by query.`);
     } else {
-      logEvent("Daily log not found");
+      logEvent(`${tableName} data not found by query.`);
     }
-
     return result;
   }
 
-  async getUser(email) {
-    const query = { _email: email };
+  async getManyByQuery(tableName, query) {
+    const transformedQuery = Array.isArray(query) ? { $or: query } : query;
 
-    const db = this.client.db(DB_NAME).collection("user");
-
-    const user = await db.findOne(query);
-    return user;
-  }
-
-  async deleteIntake(intakeId) {
     const result = await this.client
       .db(DB_NAME)
-      .collection("intake")
-      .deleteOne({ _id: intakeId });
+      .collection(tableName)
+      .find(transformedQuery)
+      .toArray();
+    if (result) {
+      logEvent(`${tableName} data found by query.`);
+    } else {
+      logEvent(`${tableName} data not found by query.`);
+    }
+    return result;
+  }
+
+  async post(tableName, body) {
+    const result = await this.client
+      .db(DB_NAME)
+      .collection(tableName)
+      .insertOne(body);
+    logEvent(
+      `${result.insertedCount} documents were inserted to ${tableName} with the _id: ${result.insertedId}`
+    );
+  }
+
+  async patch(tableName, body) {
+    return await this.client.db(DB_NAME).collection(tableName).updateOne(
+      { _id: body.id },
+      {
+        $set: body,
+      }
+    );
+  }
+
+  async delete(tableName, id) {
+    const result = await this.client
+      .db(DB_NAME)
+      .collection(tableName)
+      .deleteOne({ _id: id });
 
     if (!result) {
-      logError(`Could not delete intake of id: ${intakeId}`);
+      logError(`Could not delete record in ${tableName} of id: ${id}`);
     }
     return result;
   }
 
-  async deleteAllUsers() {
+  async deleteAll(tableName) {
     const result = await this.client
       .db(DB_NAME)
-      .collection("user")
+      .collection(tableName)
       .deleteMany({});
 
     if (result) {
       logEvent(
-        "User database reset. " + result.deletedCount + " entries deleted."
+        `${tableName} table reset. " + ${result.deletedCount} + " entries deleted.`
       );
     }
     return result;
