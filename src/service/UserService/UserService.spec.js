@@ -26,7 +26,7 @@ describe("UserService", () => {
     jest.resetAllMocks();
   });
 
-  describe("createUser", () => {
+  describe("registerUser", () => {
     const userPayload = {
       email: "someEmail",
       password: "somePassword",
@@ -45,7 +45,7 @@ describe("UserService", () => {
         .mockReturnValue(false);
 
       userService.registerHandler = registerSpy;
-      await userService.createUser(userPayload);
+      await userService.registerUser(userPayload);
 
       expect(logError).toHaveBeenCalledWith("Invalid user data");
       expect(registerSpy).not.toHaveBeenCalled();
@@ -67,14 +67,14 @@ describe("UserService", () => {
         .fn()
         .mockReturnValue(true);
 
-      mongoClient.getUser = jest.fn().mockImplementation((email) => {
+      mongoClient.getOneByQuery = jest.fn().mockImplementation((email) => {
         return false;
       });
 
       const userService = new UserService(mongoClient);
       userService.registerHandler = registerSpy;
 
-      const user = await userService.createUser(userPayload);
+      const user = await userService.registerUser(userPayload);
 
       expect(user._id).toBe("8");
       expect(logError).not.toHaveBeenCalled();
@@ -85,14 +85,16 @@ describe("UserService", () => {
       const registerSpy = jest.fn();
       const mongoClient = new MongoClient();
 
-      mongoClient.getUser = jest.fn().mockImplementation((email) => {
-        return true;
-      });
+      mongoClient.getOneByQueryOneByQuery = jest
+        .fn()
+        .mockImplementation((email) => {
+          return true;
+        });
 
       const userService = new UserService(mongoClient);
       userService.registerHandler = registerSpy;
 
-      await userService.createUser(userPayload);
+      await userService.registerUser(userPayload);
 
       expect(registerSpy).not.toHaveBeenCalled();
     });
@@ -101,14 +103,16 @@ describe("UserService", () => {
       const registerSpy = jest.fn();
       const mongoClient = new MongoClient();
 
-      mongoClient.getUser = jest.fn().mockImplementation((email) => {
-        return Error("the worst thing ever happened");
-      });
+      mongoClient.getOneByQueryOneByQuery = jest
+        .fn()
+        .mockImplementation((email) => {
+          return Error("the worst thing ever happened");
+        });
 
       const userService = new UserService(mongoClient);
       userService.registerHandler = registerSpy;
 
-      await userService.createUser(userPayload);
+      await userService.registerUser(userPayload);
 
       expect(registerSpy).not.toHaveBeenCalled();
     });
@@ -128,11 +132,11 @@ describe("UserService", () => {
       UserValidator.validateRegisterUserPayload = jest
         .fn()
         .mockReturnValue(true);
-      mongoClient.getUser = jest.fn().mockReturnValue(null);
+      mongoClient.getOneByQuery = jest.fn().mockReturnValue(null);
       const userService = new UserService(mongoClient);
       userService.registerHandler = registerSpy;
 
-      const result = await userService.createUser(userPayload);
+      const result = await userService.registerUser(userPayload);
 
       expect(result).toEqual(expectedEntity);
     });
@@ -152,11 +156,11 @@ describe("UserService", () => {
       UserValidator.validateRegisterUserPayload = jest
         .fn()
         .mockReturnValue(true);
-      mongoClient.getUser = jest.fn().mockReturnValue(existingEntity);
+      mongoClient.getOneByQuery = jest.fn().mockReturnValue(existingEntity);
       const userService = new UserService(mongoClient);
       userService.registerHandler = registerSpy;
 
-      const result = await userService.createUser(userPayload);
+      const result = await userService.registerUser(userPayload);
 
       expect(result).toBeUndefined();
       expect(registerSpy).not.toHaveBeenCalled();
@@ -171,16 +175,13 @@ describe("UserService", () => {
         phone = "somePhone";
 
       const mongoClient = new MongoClient();
-      mongoClient.getUser = jest.fn().mockImplementation((email) => {
-        return new User(
-          "someId",
-          "somePassword",
-          first,
-          last,
-          email,
-          phone,
-          "someRole"
-        );
+      mongoClient.getOneByQuery = jest.fn().mockImplementation((someEmail) => {
+        return {
+          _firstName: first,
+          _lastName: last,
+          _email: email,
+          _phone: phone,
+        };
       });
       const userService = new UserService(mongoClient);
 
@@ -198,7 +199,7 @@ describe("UserService", () => {
       const email = "someEmail";
 
       const mongoClient = new MongoClient();
-      mongoClient.getUser = jest.fn().mockImplementation((email) => {
+      mongoClient.getOneByQuery = jest.fn().mockImplementation((email) => {
         return null;
       });
       const userService = new UserService(mongoClient);
@@ -213,7 +214,7 @@ describe("UserService", () => {
     it("should return token if user exists and password is correct", async () => {
       const token = "someToken";
       const mongoClient = new MongoClient();
-      mongoClient.getUser = jest.fn().mockImplementation((email) => {
+      mongoClient.getOneByQuery = jest.fn().mockImplementation((email) => {
         return {
           _id: "someId",
           _password: "somePassword",
@@ -230,7 +231,7 @@ describe("UserService", () => {
 
     it("should not return token if user doesn't exists", async () => {
       const mongoClient = new MongoClient();
-      mongoClient.getUser = jest.fn().mockReturnValue(null);
+      mongoClient.getOneByQueryUser = jest.fn().mockReturnValue(null);
 
       const userService = new UserService(mongoClient);
       await userService.verifyUser({
@@ -242,7 +243,7 @@ describe("UserService", () => {
 
     it("should not return token if password is incorrect", async () => {
       const mongoClient = new MongoClient();
-      mongoClient.getUser = jest.fn().mockReturnValue({
+      mongoClient.getOneByQuery = jest.fn().mockReturnValue({
         _id: "someId",
         _password: "somePassword",
       });

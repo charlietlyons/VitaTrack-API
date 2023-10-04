@@ -50,9 +50,14 @@ describe("DailyLogService", () => {
     );
 
     const mongoClient = new MongoClient();
+    mongoClient.getOneByQuery = jest.fn().mockImplementation(() => {
+      return {
+        _id: "someId",
+      };
+    });
     mongoClient.getManyByQuery = jest
       .fn()
-      .mockImplementation((user, callback) => {
+      .mockImplementation((tableName, query) => {
         return { _id: "someId" };
       });
     mongoClient.getManyByQuery = jest.fn().mockImplementation((id, today) => {
@@ -70,8 +75,8 @@ describe("DailyLogService", () => {
     const postMock = jest.fn();
 
     const mongoClient = new MongoClient();
-    mongoClient.getUser = jest.fn().mockImplementation((user) => {
-      return null;
+    mongoClient.getOneByQuery = jest.fn().mockImplementation((user) => {
+      return false;
     });
     mongoClient.post = postMock;
 

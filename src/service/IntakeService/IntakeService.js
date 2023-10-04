@@ -17,33 +17,30 @@ export default class IntakeService {
     const dailyLog = await this.getDailyLogDataOrThrow(user._id, date);
     const intakes = await this.getIntakesDataOrThrow(user._id, dailyLog._id);
 
-    if (intakes) {
-      const payload = [];
-      for (const intake of intakes) {
-        // TODO: can this be made into one call
-        const foodData = await this.mongoClient.getOneById(
-          FOOD_TABLE,
-          intake.foodId
-        );
-        payload.push({
-          _id: intake._id,
-          userId: user._id,
-          quantity: intake.quantity,
-          name: foodData.name,
-          description: foodData.description,
-          calories: foodData.calories * intake.quantity,
-          protein: foodData.protein * intake.quantity,
-          carbs: foodData.carbs * intake.quantity,
-          fat: foodData.fat * intake.quantity,
-          servingSize: foodData.servingSize,
-          servingUnit: foodData.servingUnit,
-          imgUrl: foodData.imgUrl,
-          access: foodData.access,
-        });
-      }
-      return payload;
+    const payload = [];
+    for (const intake of intakes) {
+      // TODO: can this be made into one call
+      const foodData = await this.mongoClient.getOneById(
+        FOOD_TABLE,
+        intake.foodId
+      );
+      payload.push({
+        _id: intake._id,
+        userId: user._id,
+        quantity: intake.quantity,
+        name: foodData.name,
+        description: foodData.description,
+        calories: foodData.calories * intake.quantity,
+        protein: foodData.protein * intake.quantity,
+        carbs: foodData.carbs * intake.quantity,
+        fat: foodData.fat * intake.quantity,
+        servingSize: foodData.servingSize,
+        servingUnit: foodData.servingUnit,
+        imgUrl: foodData.imgUrl,
+        access: foodData.access,
+      });
     }
-    return [];
+    return payload;
   }
 
   async addIntake(intake) {

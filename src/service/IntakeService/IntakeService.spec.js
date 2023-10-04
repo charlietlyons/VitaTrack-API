@@ -75,8 +75,6 @@ describe("IntakeService", () => {
     });
 
     it("should fail handle if daily log doesn't exist", async () => {
-      const userId = "someUser";
-      const date = "someDate";
       const { mongoClient, getOneByQueryMock } = setupMongoClient();
 
       getOneByQueryMock.mockReset();
@@ -97,8 +95,6 @@ describe("IntakeService", () => {
     });
 
     it("should fail handle if user intake doesn't exist", async () => {
-      const userId = "someUser";
-      const date = "someDate";
       const { mongoClient, getManyByQueryMock } = setupMongoClient();
 
       getManyByQueryMock.mockReset();
@@ -183,7 +179,121 @@ describe("IntakeService", () => {
     });
   });
 
-  function setupMongoClient(returnOptions) {
+  describe("getUserDataOrThrow", () => {
+    it("should return user if user exists", async () => {
+      const { mongoClient, getOneByIdMock } = setupMongoClient();
+
+      const intakeService = new IntakeService(mongoClient);
+
+      const user = await intakeService.getUserDataOrThrow("someUserId");
+
+      expect(user).toEqual({ _id: "someUserId" });
+      expect(getOneByIdMock).toHaveBeenCalledWith(USER_TABLE, "someUserId");
+    });
+
+    it("should throw error if user doesn't exist", async () => {
+      const { mongoClient, getOneByIdMock } = setupMongoClient();
+      getOneByIdMock.mockReset();
+      getOneByIdMock.mockImplementation((tableName, id) => {
+        return null;
+      });
+
+      const intakeService = new IntakeService(mongoClient);
+
+      await expect(
+        intakeService.getUserDataOrThrow("someUserId")
+      ).rejects.toThrowError("Could not get user data for userId: someUserId");
+      expect(getOneByIdMock).toHaveBeenCalledWith(USER_TABLE, "someUserId");
+    });
+  });
+
+  describe("getDailyLogDataOrThrow", () => {
+    it("should return daily log data if it exists", async () => {
+      const { mongoClient, getOneByQueryMock } = setupMongoClient();
+
+      getOneByQueryMock.mockReset();
+      getOneByQueryMock.mockImplementation((tableName, id) => {
+        return { _id: "someId", userId: "someUserId", date: "2022-01-01" };
+      });
+      const intakeService = new IntakeService(mongoClient);
+
+      const dailyLogData = await intakeService.getDailyLogDataOrThrow(
+        "someUserId",
+        "2022-01-01"
+      );
+
+      expect(dailyLogData).toEqual({
+        _id: "someId",
+        userId: "someUserId",
+        date: "2022-01-01",
+      });
+      expect(getOneByQueryMock).toHaveBeenCalledWith(DAYSTAT_TABLE, {
+        userId: "someUserId",
+        date: "2022-01-01",
+      });
+    });
+
+    it("should throw error if daily log data doesn't exist", async () => {
+      const { mongoClient, getOneByQueryMock } = setupMongoClient();
+      getOneByQueryMock.mockReset();
+      getOneByQueryMock.mockImplementation((tableName, id) => {
+        return null;
+      });
+
+      const intakeService = new IntakeService(mongoClient);
+
+      await expect(
+        intakeService.getDailyLogDataOrThrow("someUserId", "2022-01-01")
+      ).rejects.toThrowError(
+        "Could not get dailyLog for userId: someUserId on 2022-01-01"
+      );
+      expect(getOneByQueryMock).toHaveBeenCalledWith(DAYSTAT_TABLE, {
+        userId: "someUserId",
+        date: "2022-01-01",
+      });
+    });
+  });
+
+  describe("getIntakesDataOrThrow", () => {
+    it("should return intakes data if it exists", async () => {
+      const { mongoClient, getManyByQueryMock } = setupMongoClient();
+
+      getManyByQueryMock.mockReset();
+      getManyByQueryMock.mockImplementation((tableName, id) => {
+        return [{ _id: "intakeId", foodId: "foodId", quantity: 1 }];
+      });
+
+      const intakeService = new IntakeService(mongoClient);
+
+      const intakesData = await intakeService.getIntakesDataOrThrow(
+        "someUserId",
+        "2022-01-01"
+      );
+
+      expect(intakesData).toEqual([
+        { _id: "intakeId", foodId: "foodId", quantity: 1 },
+      ]);
+    });
+
+    it("should throw error if intakes data doesn't exist", async () => {
+      const { mongoClient, getManyByQueryMock } = setupMongoClient();
+
+      getManyByQueryMock.mockReset();
+      getManyByQueryMock.mockImplementation((tableName, id) => {
+        return null;
+      });
+
+      const intakeService = new IntakeService(mongoClient);
+
+      await expect(
+        intakeService.getIntakesDataOrThrow("someUserId", "2022-01-01")
+      ).rejects.toThrowError(
+        "Could not get intake data for userId: someUserId"
+      );
+    });
+  });
+
+  function setupMongoClient() {
     const mongoClient = new MongoClient();
     const getOneByIdMock = jest
       .fn()

@@ -56,7 +56,7 @@ export default class MongoClient {
       .collection(tableName)
       .find(transformedQuery)
       .toArray();
-    if (result) {
+    if (result && result.length > 0) {
       logEvent(`${tableName} data found by query.`);
     } else {
       logEvent(`${tableName} data not found by query.`);
@@ -70,7 +70,7 @@ export default class MongoClient {
       .collection(tableName)
       .insertOne(body);
     logEvent(
-      `${result.insertedCount} documents were inserted to ${tableName} with the _id: ${result.insertedId}`
+      `${result.insertedCount} documents inserted to ${tableName} with the id: ${result.insertedId}`
     );
   }
 
@@ -103,7 +103,9 @@ export default class MongoClient {
 
     if (result) {
       logEvent(
-        `${tableName} table reset. " + ${result.deletedCount} + " entries deleted.`
+        `${
+          tableName.charAt(0).toUpperCase() + tableName.slice(1)
+        } table reset. ${result.deletedCount} entries deleted.`
       );
     }
     return result;

@@ -2,7 +2,12 @@ import FoodService from "./FoodService";
 import Food from "../../data/Food";
 import MongoClient from "../../client/MongoClient/MongoClient";
 import { expect } from "@jest/globals";
-import { PRIVATE_ACCESS, PUBLIC_ACCESS, ADMIN_USERID } from "../../constants";
+import {
+  PRIVATE_ACCESS,
+  PUBLIC_ACCESS,
+  ADMIN_USERID,
+  FOOD_TABLE,
+} from "../../constants";
 
 jest.mock("crypto", () => {
   return {
@@ -36,7 +41,7 @@ describe("Food Service", () => {
 
     await foodService.addFood(foodEntity);
 
-    expect(postMock).toHaveBeenCalledWith(foodEntity);
+    expect(postMock).toHaveBeenCalledWith(FOOD_TABLE, foodEntity);
   });
 
   it("should return a list of public foods and custom foods corresponding with userId", async () => {
@@ -92,6 +97,6 @@ describe("Food Service", () => {
 
     foodEntity.access = PRIVATE_ACCESS;
 
-    expect(postMock).toHaveBeenCalledWith(foodEntity);
+    expect(postMock).toHaveBeenCalledWith(FOOD_TABLE, foodEntity);
   });
 });

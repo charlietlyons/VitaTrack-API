@@ -18,7 +18,7 @@ export default class UserService {
     this.userTransformer = new UserTransformer();
   }
 
-  async createUser(userData) {
+  async registerUser(userData) {
     if (!UserValidator.validateRegisterUserPayload(userData)) {
       logError("Invalid user data");
     } else {
@@ -38,7 +38,7 @@ export default class UserService {
   }
 
   async getUserDetails(email) {
-    const result = await this.mongoClient.getOneByQuery({
+    const result = await this.mongoClient.getOneByQuery(USER_TABLE, {
       email: email,
     });
     if (result) {
