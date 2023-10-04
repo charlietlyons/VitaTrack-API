@@ -15,6 +15,7 @@
   "scripts": {
     "start": "nodemon server.js",
     "test": "jest --watchAll --verbose",
+    "test:one": "jest --watchAll --verbose -t IntakeService",
     "test:coverage": "jest --watchAll --coverage",
     "test:cache": "jest --clearCache"
   },

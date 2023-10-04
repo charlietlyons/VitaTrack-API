@@ -1,3 +1,4 @@
+import { INTAKE_TABLE } from "../../constants.js";
 import { logError } from "../../util/Logger.js";
 
 export default class IntakeController {
