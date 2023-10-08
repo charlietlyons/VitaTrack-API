@@ -69,18 +69,24 @@ export default class MongoClient {
       .db(DB_NAME)
       .collection(tableName)
       .insertOne(body);
-    logEvent(
-      `${result.insertedCount} documents inserted to ${tableName} with the id: ${result.insertedId}`
-    );
+    logEvent(`Inserted into ${tableName} with the id: ${result.insertedId}`);
   }
 
   async patch(tableName, body) {
-    return await this.client.db(DB_NAME).collection(tableName).updateOne(
-      { _id: body.id },
-      {
-        $set: body,
-      }
-    );
+    const result = await this.client
+      .db(DB_NAME)
+      .collection(tableName)
+      .updateOne(
+        { _id: body._id },
+        {
+          $set: body,
+        }
+      );
+    if (result.modifiedCount === 1) {
+      logEvent(`${tableName} data updated with id: ${body._id}`);
+    } else {
+      throw Error(`Could not update ${tableName} data with id: ${body._id}`);
+    }
   }
 
   async delete(tableName, id) {

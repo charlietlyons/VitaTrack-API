@@ -221,7 +221,7 @@ describe("UserService", () => {
         };
       });
       const userService = new UserService(mongoClient);
-      userService.checkPasswordForToken = jest.fn().mockResolvedValue(token);
+      userService.verifyPassword = jest.fn().mockResolvedValue(token);
       const result = await userService.verifyUser({
         email: "someEmail",
         password: "somePassword",
@@ -248,7 +248,7 @@ describe("UserService", () => {
         _password: "somePassword",
       });
       const userService = new UserService(mongoClient);
-      userService.checkPasswordForToken = jest.fn().mockResolvedValue(null);
+      userService.verifyPassword = jest.fn().mockResolvedValue(null);
       const result = await userService.verifyUser({
         email: "someEmail",
         password: "somePassword",
@@ -301,7 +301,7 @@ describe("UserService", () => {
     });
   });
 
-  describe("checkPasswordForToken", () => {
+  describe("verifyPassword", () => {
     it("return token if match", async () => {
       const token = "someToken";
       const hashedPassword = "someHashedPassword";
@@ -315,7 +315,7 @@ describe("UserService", () => {
       const mongoClient = new MongoClient();
       const userService = new UserService(mongoClient);
 
-      const result = await userService.checkPasswordForToken(
+      const result = await userService.verifyPassword(
         loginFormData,
         hashedPassword
       );
@@ -336,7 +336,7 @@ describe("UserService", () => {
       const mongoClient = new MongoClient();
       const userService = new UserService(mongoClient);
 
-      const result = await userService.checkPasswordForToken(
+      const result = await userService.verifyPassword(
         loginFormData,
         hashedPassword
       );

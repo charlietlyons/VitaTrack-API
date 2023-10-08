@@ -15,6 +15,10 @@ import { healthcheck } from "./controller/HealthCheckController/HealthCheckContr
 
 dotenv.config();
 
+// TODO: refactor the code to use async/await
+// TODO: implement a rate limiter
+// TODO: caching solution
+
 // CLIENTS
 const mongoClient = new MongoClient();
 
@@ -58,6 +62,9 @@ router.get("/food", (req, res) => {
 router.post("/food", (req, res) => {
   Authenticator.authenticate(req, res, foodController.addFood);
 });
+router.patch("/food", (req, res) => {
+  Authenticator.authenticate(req, res, foodController.updateFood);
+});
 
 // User
 router.get("/reset-users", (req, res) =>
@@ -80,7 +87,7 @@ router.post("/intake", (req, res) => {
 router.delete("/intake/:id", (req, res) => {
   Authenticator.authenticate(req, res, intakeController.deleteIntake);
 });
-router.patch("/intake/", (req, res) => {
+router.patch("/intake", (req, res) => {
   Authenticator.authenticate(req, res, intakeController.updateIntake);
 });
 app.use(router);

@@ -13,7 +13,7 @@ export default class IntakeController {
   async getIntake(req, res, data) {
     try {
       const result = await this.intakeService.getUserIntake(
-        data.email,
+        data.id,
         req.query.date
       );
       if (result) {
@@ -30,7 +30,7 @@ export default class IntakeController {
   async addIntake(req, res, data) {
     try {
       const result = await this.intakeService.addIntake({
-        email: data.email,
+        userId: data.id,
         ...req.body,
       });
 

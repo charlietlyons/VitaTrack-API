@@ -30,7 +30,7 @@ describe("IntakeController", () => {
       await intakeController.getIntake(
         { query: { date: "2021-01-01" } },
         { status: statusSpy },
-        { email: "test" }
+        { id: "test" }
       );
 
       expect(getIntakeMock).toHaveBeenCalledWith("test", "2021-01-01");
@@ -47,7 +47,7 @@ describe("IntakeController", () => {
       await intakeController.getIntake(
         { query: { date: "2021-01-01" } },
         { status: statusSpy },
-        { email: "test" }
+        { id: "test" }
       );
 
       expect(getIntakeMock).toHaveBeenCalledWith("test", "2021-01-01");
@@ -66,7 +66,7 @@ describe("IntakeController", () => {
       await intakeController.getIntake(
         { query: { date: "2021-01-01" } },
         { status: statusSpy },
-        { email: "test" }
+        { id: "test" }
       );
 
       expect(getIntakeMock).toHaveBeenCalledWith("test", "2021-01-01");
@@ -85,10 +85,10 @@ describe("IntakeController", () => {
       await intakeController.addIntake(
         { body: {} },
         { status: statusSpy },
-        { email: "test" }
+        { id: "test" }
       );
 
-      expect(addIntakeMock).toHaveBeenCalledWith({ email: "test", ...{} });
+      expect(addIntakeMock).toHaveBeenCalledWith({ userId: "test" });
       expect(statusSpy).toHaveBeenCalledWith(201);
     });
 
@@ -101,10 +101,10 @@ describe("IntakeController", () => {
       await intakeController.addIntake(
         { body: {} },
         { status: statusSpy },
-        { email: "test" }
+        { id: "test" }
       );
 
-      expect(addIntakeMock).toHaveBeenCalledWith({ email: "test", ...{} });
+      expect(addIntakeMock).toHaveBeenCalledWith({ userId: "test" });
       expect(statusSpy).toHaveBeenCalledWith(400);
     });
 
@@ -119,10 +119,10 @@ describe("IntakeController", () => {
       await intakeController.addIntake(
         { body: {} },
         { status: statusSpy },
-        { email: "test" }
+        { id: "test" }
       );
 
-      expect(addIntakeMock).toHaveBeenCalledWith({ email: "test", ...{} });
+      expect(addIntakeMock).toHaveBeenCalledWith({ userId: "test" });
       expect(statusSpy).toHaveBeenCalledWith(500);
     });
   });

@@ -44,7 +44,7 @@ export default class IntakeService {
   }
 
   async addIntake(intake) {
-    const user = await this.getUserDataOrThrow(intake.email);
+    const user = await this.getUserDataOrThrow(intake.userId);
     const dailyLog = await this.getDailyLogDataOrThrow(
       user._id,
       new Date().toJSON().slice(0, 10)
@@ -89,7 +89,7 @@ export default class IntakeService {
   async getIntakesDataOrThrow(userId, dayId) {
     const intakes = await this.mongoClient.getManyByQuery(INTAKE_TABLE, {
       userId: userId,
-      date: dayId,
+      dayId: dayId,
     });
 
     if (!intakes)

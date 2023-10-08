@@ -46,7 +46,7 @@ describe("IntakeService", () => {
       expect(getOneByIdMock).toHaveBeenCalledWith(FOOD_TABLE, "foodId");
       expect(getManyByQueryMock).toHaveBeenCalledWith(INTAKE_TABLE, {
         userId: userId,
-        date: date,
+        dayId: date,
       });
     });
 
@@ -110,7 +110,7 @@ describe("IntakeService", () => {
 
       expect(getManyByQueryMock).toHaveBeenCalledWith(INTAKE_TABLE, {
         userId: userId,
-        date: date,
+        dayId: date,
       });
     });
 
@@ -142,7 +142,7 @@ describe("IntakeService", () => {
 
         const insertedEntity = await intakeService.addIntake({
           foodId: "foodId",
-          email: "userId",
+          userId: "userId",
           quantity: 1,
         });
 

@@ -45,7 +45,7 @@ describe("FoodController", () => {
 
     it("should call food service to add new food", async () => {
       const mockAddFood = jest.fn().mockImplementation((body) => {
-        return true
+        return true;
       });
 
       foodService.addFood = mockAddFood;
@@ -55,7 +55,9 @@ describe("FoodController", () => {
       await foodController.addFood({ body: payload }, res);
 
       expect(mockAddFood).toHaveBeenCalledWith(payload);
-      expect(sendSpy).toHaveBeenCalledWith({message: "Food added successfully."});
+      expect(sendSpy).toHaveBeenCalledWith({
+        message: "Food added successfully.",
+      });
       expect(statusSpy).toBeCalledWith(201);
       expect(logError).not.toHaveBeenCalled();
     });
@@ -184,7 +186,7 @@ describe("FoodController", () => {
       );
 
       expect(statusSpy).toHaveBeenCalledWith(204);
-      expect(sendSpy).toHaveBeenCalledWith([]);
+      expect(sendSpy).toHaveBeenCalledWith();
     });
 
     it("should return 400 when request body is invalid", async () => {
@@ -294,6 +296,47 @@ describe("FoodController", () => {
       expect(sendSpy).toHaveBeenCalledWith({
         message: "bad tims",
       });
+    });
+  });
+
+  describe("updateFood", () => {
+    it("should send 204 if response is present", async () => {
+      foodService.updateFood = jest.fn().mockImplementation(() => {
+        return true;
+      });
+
+      const foodController = new FoodController(foodService);
+
+      await foodController.updateFood({}, res);
+
+      expect(statusSpy).toHaveBeenCalledWith(204);
+      expect(sendSpy).toHaveBeenCalledWith();
+    });
+
+    it("should send 400 if response is not present", async () => {
+      foodService.updateFood = jest.fn().mockImplementation(() => {
+        return false;
+      });
+
+      const foodController = new FoodController(foodService);
+
+      await foodController.updateFood({}, res);
+
+      expect(statusSpy).toHaveBeenCalledWith(400);
+      expect(sendSpy).toHaveBeenCalledWith();
+    });
+
+    it("should send 500 if errors", async () => {
+      foodService.updateFood = jest.fn().mockImplementation(() => {
+        throw Error("dumb");
+      });
+
+      const foodController = new FoodController(foodService);
+
+      await foodController.updateFood({}, res);
+
+      expect(statusSpy).toHaveBeenCalledWith(500);
+      expect(sendSpy).toHaveBeenCalledWith();
     });
   });
 });

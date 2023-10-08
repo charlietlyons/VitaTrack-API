@@ -373,50 +373,48 @@ describe("MongoClient", () => {
 
       expect(mongoDbMock).toHaveBeenCalledWith(food);
       expect(logEvent).toHaveBeenCalledWith(
-        "1 documents inserted to food with the id: someId"
+        "Inserted into food with the id: someId"
       );
     });
   });
 
   describe("patch", () => {
-    it("should logEvent intake inserted if successful", async () => {
+    it("should logEvent intake update if successful", async () => {
       MongoClientInstance.mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(true),
         db: jest.fn().mockReturnValue({
           collection: jest.fn().mockReturnValue({
-            updateOne: jest.fn().mockReturnValue(true),
+            updateOne: jest.fn().mockReturnValue({ modifiedCount: 1 }),
           }),
         }),
       }));
 
       const mongoClient = new MongoClient();
 
-      const response = await mongoClient.patch(INTAKE_TABLE, {
-        id: "someId",
+      await mongoClient.patch(INTAKE_TABLE, {
+        _id: "someId",
         quantity: 2,
       });
-
-      expect(response).toEqual(true);
     });
 
-    it("should not logEvent intake inserted if unsuccessful", async () => {
+    it("should not throw error intake updated if unsuccessful", async () => {
       MongoClientInstance.mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(true),
         db: jest.fn().mockReturnValue({
           collection: jest.fn().mockReturnValue({
-            updateOne: jest.fn().mockReturnValue(false),
+            updateOne: jest.fn().mockReturnValue({ modifiedCount: 0 }),
           }),
         }),
       }));
 
       const mongoClient = new MongoClient();
 
-      const response = await mongoClient.patch(INTAKE_TABLE, {
-        id: "someId",
-        quantity: 2,
-      });
-
-      expect(response).toEqual(false);
+      await expect(
+        mongoClient.patch(INTAKE_TABLE, {
+          _id: "someId",
+          quantity: 2,
+        })
+      ).rejects.toThrowError("Could not update intake data with id: someId");
     });
   });
 

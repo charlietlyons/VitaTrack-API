@@ -4,8 +4,10 @@ import RequestBodyValidator from "../../validators/RequestBodyValidator.js";
 class FoodController {
   constructor(foodService) {
     this.foodService = foodService;
+    // TODO: stop this
     this.addFood = this.addFood.bind(this);
     this.getFoodOptions = this.getFoodOptions.bind(this);
+    this.updateFood = this.updateFood.bind(this);
   }
 
   async addFood(req, res) {
@@ -31,7 +33,7 @@ class FoodController {
       }
       const data = await this.foodService.getFoodOptions(req.body.userId);
       if (data.length === 0) {
-        res.status(204).send(data);
+        res.status(204).send();
       } else {
         res.status(200).send(data);
       }
@@ -40,6 +42,21 @@ class FoodController {
       res
         .status(500)
         .send({ message: error.message || "Internal Server Error" });
+    }
+  }
+
+  async updateFood(req, res) {
+    try {
+      const response = await this.foodService.updateFood(req.body);
+
+      if (response) {
+        res.status(204).send();
+      } else {
+        res.status(400).send();
+      }
+    } catch (error) {
+      logError(error);
+      res.status(500).send();
     }
   }
 }

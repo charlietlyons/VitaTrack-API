@@ -56,14 +56,14 @@ export default class UserService {
 
   async verifyUser(loginFormData) {
     const result = await this.mongoClient.getOneByQuery(USER_TABLE, {
-      email: loginFormData.email,
+      _email: loginFormData.email,
     });
     if (result) {
-      const token = this.checkPasswordForToken(loginFormData, result);
+      const token = this.verifyPassword(loginFormData, result);
       return token;
     } else {
       logError("User does not exist");
-      return "";
+      return null;
     }
   }
 
@@ -81,13 +81,13 @@ export default class UserService {
     return await this.mongoClient.deleteAllUsers();
   }
 
-  async checkPasswordForToken(loginFormData, result) {
+  async verifyPassword(loginFormData, result) {
     return await bcrypt
       .compare(loginFormData.password, result._password)
       .then((match) => {
         if (match) {
           const token = jwt.sign(
-            { email: loginFormData.email },
+            { email: loginFormData.email, id: result._id },
             ACCESS_TOKEN_SECRET,
             {
               expiresIn: "1hr",

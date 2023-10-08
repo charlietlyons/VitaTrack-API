@@ -17,86 +17,121 @@ jest.mock("crypto", () => {
 });
 
 describe("Food Service", () => {
-  it("should insert food via mongoClient", async () => {
-    const postMock = jest.fn();
-    const foodEntity = new Food(
-      "8",
-      "someUserId",
-      "gross food",
-      100,
-      10,
-      10,
-      10,
-      100,
-      "g",
-      PUBLIC_ACCESS,
-      "some food",
-      "url.com"
-    );
-    const mongoInstance = new MongoClient();
+  describe("addFood", () => {
+    it("should insert food via mongoClient", async () => {
+      const postMock = jest.fn();
+      const foodEntity = new Food(
+        "8",
+        "someUserId",
+        "gross food",
+        100,
+        10,
+        10,
+        10,
+        100,
+        "g",
+        PUBLIC_ACCESS,
+        "some food",
+        "url.com"
+      );
+      const mongoInstance = new MongoClient();
 
-    mongoInstance.post = postMock;
+      mongoInstance.post = postMock;
 
-    const foodService = new FoodService(mongoInstance);
+      const foodService = new FoodService(mongoInstance);
 
-    await foodService.addFood(foodEntity);
+      await foodService.addFood(foodEntity);
 
-    expect(postMock).toHaveBeenCalledWith(FOOD_TABLE, foodEntity);
-  });
-
-  it("should return a list of public foods and custom foods corresponding with userId", async () => {
-    const privateFoods = [
-      { userId: "someUserId", access: PRIVATE_ACCESS },
-      { userId: "someUserId", access: PRIVATE_ACCESS },
-      { userId: "someUserId", access: PRIVATE_ACCESS },
-    ];
-    const publicFoods = [
-      { userId: ADMIN_USERID, access: PUBLIC_ACCESS },
-      { userId: ADMIN_USERID, access: PUBLIC_ACCESS },
-      { userId: ADMIN_USERID, access: PUBLIC_ACCESS },
-    ];
-
-    const getManyByQueryMock = jest.fn(() => {
-      return [...privateFoods, ...publicFoods];
+      expect(postMock).toHaveBeenCalledWith(FOOD_TABLE, foodEntity);
     });
 
-    const mongoInstance = new MongoClient();
+    it("should set default access to private", async () => {
+      const postMock = jest.fn();
+      const foodEntity = new Food(
+        "8",
+        "someUserId",
+        "gross food",
+        100,
+        10,
+        10,
+        10,
+        100,
+        "g",
+        "addd",
+        "some food",
+        "url.com"
+      );
+      const mongoInstance = new MongoClient();
 
-    mongoInstance.getManyByQuery = getManyByQueryMock;
+      mongoInstance.post = postMock;
 
-    const foodService = new FoodService(mongoInstance);
+      const foodService = new FoodService(mongoInstance);
 
-    const foodOptions = await foodService.getFoodOptions("someUserId");
+      await foodService.addFood(foodEntity);
 
-    expect(foodOptions).toEqual([...privateFoods, ...publicFoods]);
+      foodEntity.access = PRIVATE_ACCESS;
+
+      expect(postMock).toHaveBeenCalledWith(FOOD_TABLE, foodEntity);
+    });
   });
 
-  it("should set default access to private", async () => {
-    const postMock = jest.fn();
-    const foodEntity = new Food(
-      "8",
-      "someUserId",
-      "gross food",
-      100,
-      10,
-      10,
-      10,
-      100,
-      "g",
-      "addd",
-      "some food",
-      "url.com"
-    );
-    const mongoInstance = new MongoClient();
+  describe("getFoodOptions", () => {
+    it("should return a list of public foods and custom foods corresponding with userId", async () => {
+      const privateFoods = [
+        { userId: "someUserId", access: PRIVATE_ACCESS },
+        { userId: "someUserId", access: PRIVATE_ACCESS },
+        { userId: "someUserId", access: PRIVATE_ACCESS },
+      ];
+      const publicFoods = [
+        { userId: ADMIN_USERID, access: PUBLIC_ACCESS },
+        { userId: ADMIN_USERID, access: PUBLIC_ACCESS },
+        { userId: ADMIN_USERID, access: PUBLIC_ACCESS },
+      ];
 
-    mongoInstance.post = postMock;
+      const getManyByQueryMock = jest.fn(() => {
+        return [...privateFoods, ...publicFoods];
+      });
 
-    const foodService = new FoodService(mongoInstance);
+      const mongoInstance = new MongoClient();
 
-    await foodService.addFood(foodEntity);
+      mongoInstance.getManyByQuery = getManyByQueryMock;
 
-    foodEntity.access = PRIVATE_ACCESS;
+      const foodService = new FoodService(mongoInstance);
 
-    expect(postMock).toHaveBeenCalledWith(FOOD_TABLE, foodEntity);
+      const foodOptions = await foodService.getFoodOptions("someUserId");
+
+      expect(foodOptions).toEqual([...privateFoods, ...publicFoods]);
+    });
+  });
+
+  describe("updateFood", () => {
+    it("should update food", async () => {
+      const payload = {
+        _id: "someId",
+        userId: "someUserId",
+        name: "gross food",
+        calories: 100,
+        protein: 10,
+        carbs: 10,
+        fat: 10,
+        servingSize: 100,
+        servingUnit: "g",
+        access: PUBLIC_ACCESS,
+        description: "some food",
+        imageUrl: "url.com",
+      };
+      const mongoClient = new MongoClient();
+      const patchMock = jest.fn().mockImplementation(() => {
+        return true;
+      });
+
+      mongoClient.patch = patchMock;
+
+      const foodService = new FoodService(mongoClient);
+
+      await foodService.updateFood(payload);
+
+      expect(patchMock).toBeCalledWith(FOOD_TABLE, payload);
+    });
   });
 });

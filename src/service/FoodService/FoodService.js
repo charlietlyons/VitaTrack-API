@@ -33,6 +33,10 @@ class FoodService {
     ]);
     return foods;
   }
+
+  async updateFood(foodData) {
+    await this.mongoClient.patch(FOOD_TABLE, foodData);
+  }
 }
 
 export default FoodService;
