@@ -97,6 +97,8 @@ export default class MongoClient {
 
     if (!result) {
       logError(`Could not delete record in ${tableName} of id: ${id}`);
+    } else {
+      logError(`Deleted record in ${tableName} of id: ${id}`);
     }
     return result;
   }

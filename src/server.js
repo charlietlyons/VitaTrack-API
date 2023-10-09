@@ -65,6 +65,9 @@ router.post("/food", (req, res) => {
 router.patch("/food", (req, res) => {
   Authenticator.authenticate(req, res, foodController.updateFood);
 });
+router.delete("/food/:id", (req, res) => {
+  Authenticator.authenticate(req, res, foodController.deleteFood);
+});
 
 // User
 router.get("/reset-users", (req, res) =>

@@ -8,6 +8,7 @@ class FoodController {
     this.addFood = this.addFood.bind(this);
     this.getFoodOptions = this.getFoodOptions.bind(this);
     this.updateFood = this.updateFood.bind(this);
+    this.deleteFood = this.deleteFood.bind(this);
   }
 
   async addFood(req, res) {
@@ -48,6 +49,21 @@ class FoodController {
   async updateFood(req, res) {
     try {
       const response = await this.foodService.updateFood(req.body);
+
+      if (response) {
+        res.status(204).send();
+      } else {
+        res.status(400).send();
+      }
+    } catch (error) {
+      logError(error);
+      res.status(500).send();
+    }
+  }
+
+  async deleteFood(req, res) {
+    try {
+      const response = await this.foodService.deleteFood(req.params.id);
 
       if (response) {
         res.status(204).send();

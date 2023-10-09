@@ -339,4 +339,45 @@ describe("FoodController", () => {
       expect(sendSpy).toHaveBeenCalledWith();
     });
   });
+
+  describe("deleteFood", () => {
+    it("should send 204 if response is present", async () => {
+      foodService.deleteFood = jest.fn().mockImplementation(() => {
+        return true;
+      });
+
+      const foodController = new FoodController(foodService);
+
+      await foodController.deleteFood({ params: { id: "12345" } }, res);
+
+      expect(statusSpy).toHaveBeenCalledWith(204);
+      expect(sendSpy).toHaveBeenCalledWith();
+    });
+
+    it("should send 400 if response is not present", async () => {
+      foodService.deleteFood = jest.fn().mockImplementation(() => {
+        return false;
+      });
+
+      const foodController = new FoodController(foodService);
+
+      await foodController.deleteFood({ params: { id: "12345" } }, res);
+
+      expect(statusSpy).toHaveBeenCalledWith(400);
+      expect(sendSpy).toHaveBeenCalledWith();
+    });
+
+    it("should send 500 if errors", async () => {
+      foodService.deleteFood = jest.fn().mockImplementation(() => {
+        throw Error("dumb");
+      });
+
+      const foodController = new FoodController(foodService);
+
+      await foodController.deleteFood({}, res);
+
+      expect(statusSpy).toHaveBeenCalledWith(500);
+      expect(sendSpy).toHaveBeenCalledWith();
+    });
+  });
 });

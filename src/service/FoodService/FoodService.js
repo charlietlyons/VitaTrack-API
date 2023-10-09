@@ -37,6 +37,10 @@ class FoodService {
   async updateFood(foodData) {
     await this.mongoClient.patch(FOOD_TABLE, foodData);
   }
+
+  async deleteFood(foodId) {
+    await this.mongoClient.delete(FOOD_TABLE, foodId);
+  }
 }
 
 export default FoodService;

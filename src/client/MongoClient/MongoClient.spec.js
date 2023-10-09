@@ -432,7 +432,9 @@ describe("MongoClient", () => {
       const mongoClient = new MongoClient();
       const result = await mongoClient.delete(INTAKE_TABLE, "someIntakeId");
 
-      expect(logError).not.toHaveBeenCalled();
+      expect(logError).toHaveBeenCalledWith(
+        "Deleted record in intake of id: someIntakeId"
+      );
       expect(result).toEqual(true);
     });
 

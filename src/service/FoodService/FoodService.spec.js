@@ -134,4 +134,21 @@ describe("Food Service", () => {
       expect(patchMock).toBeCalledWith(FOOD_TABLE, payload);
     });
   });
+
+  describe("deleteFood", () => {
+    it("should delete food", async () => {
+      const mongoClient = new MongoClient();
+      const deleteMock = jest.fn().mockImplementation(() => {
+        return true;
+      });
+
+      mongoClient.delete = deleteMock;
+
+      const foodService = new FoodService(mongoClient);
+
+      await foodService.deleteFood("someId");
+
+      expect(deleteMock).toBeCalledWith(FOOD_TABLE, "someId");
+    });
+  });
 });
