@@ -51,9 +51,11 @@ export default class UserController {
 
   verifyToken = async (req, res) => {
     try {
-      const result = await this.userService.verifyToken(req.body.token);
+      const result = await this.userService.verifyToken(
+        req.headers.authorization.split(" ")[1]
+      );
       if (result) {
-        await this.successHandler(result);
+        await this.successHandler(req, res, result);
       } else {
         await this.failHandler(req, res, Error("Could not verify token"), 403);
       }

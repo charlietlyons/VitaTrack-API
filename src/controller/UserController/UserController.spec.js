@@ -33,6 +33,9 @@ describe("UserController", () => {
     req = {
       method: "SOME",
       url: "someUrl",
+      headers: {
+        authorization: "Bearer someToken",
+      },
       body: { token: "some token" },
     };
     res = {
