@@ -56,7 +56,7 @@ export default class IntakeService {
       intake.foodId,
       intake.quantity
     );
-    await this.mongoClient.post(INTAKE_TABLE, intakeEntity);
+    await this.mongoClient.insert(INTAKE_TABLE, intakeEntity);
     return intakeEntity;
   }
 
@@ -65,7 +65,7 @@ export default class IntakeService {
   }
 
   async updateIntake(intakeUpdate) {
-    return await this.mongoClient.patch(INTAKE_TABLE, intakeUpdate);
+    return await this.mongoClient.update(INTAKE_TABLE, intakeUpdate);
   }
 
   async getUserDataOrThrow(userId) {

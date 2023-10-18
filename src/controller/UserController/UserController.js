@@ -38,12 +38,35 @@ export default class UserController {
     }
   };
 
+  sendForgotPasswordEmail(req, res) {
+    // TODO: Leverage email API to send a reset link to the email
+  }
+
+  updatePassword = async (req, res, data) => {
+    try {
+      const result = await this.userService.updateUser(req.body, data.email);
+
+      if (result) {
+        res.status(200).send();
+      } else {
+        res.status(500).send();
+      }
+    } catch (err) {
+      logError(err);
+      res.status(500).send();
+    }
+  };
+
   // TODO: have this return JUST the token and not the whole JS object
   verifyUser = async (req, res) => {
     try {
       const token = await this.userService.verifyUser(req.body);
-      await this.dailyLogService.prepareDailyLog(req.body.email);
-      await this.successHandler(req, res, JSON.stringify({ token: token }));
+      if (token) {
+        await this.dailyLogService.prepareDailyLog(req.body.email);
+        await this.successHandler(req, res, JSON.stringify({ token: token }));
+      } else {
+        await this.failHandler(req, res, Error("Could not verify user"), 403);
+      }
     } catch (e) {
       await this.failHandler(req, res, e, 500);
     }

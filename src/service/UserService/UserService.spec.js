@@ -167,6 +167,73 @@ describe("UserService", () => {
     });
   });
 
+  describe("updateUser", () => {
+    it("should return false if user doesn't exist", async () => {
+      const mongoClient = new MongoClient();
+      mongoClient.getOneByQuery = jest.fn().mockReturnValue(false);
+      mongoClient.update = jest.fn().mockReturnValue(true);
+      const userService = new UserService(mongoClient);
+
+      const result = await userService.updateUser(
+        {
+          password: "somePassword",
+        },
+        "someEmail"
+      );
+
+      expect(result).toEqual(false);
+    });
+
+    it("should return true if update is successful", async () => {
+      const mongoClient = new MongoClient();
+      mongoClient.getOneByQuery = jest.fn().mockReturnValue({ _id: "someId" });
+      mongoClient.update = jest.fn().mockReturnValue(true);
+      const userService = new UserService(mongoClient);
+
+      const result = await userService.updateUser(
+        {
+          password: "somePassword",
+        },
+        "someEmail"
+      );
+
+      expect(result).toEqual(true);
+    });
+
+    it("should return false if update is unsuccessful", async () => {
+      const mongoClient = new MongoClient();
+      mongoClient.getOneByQuery = jest.fn().mockReturnValue({ _id: "someId" });
+      mongoClient.update = jest.fn().mockReturnValue(false);
+      const userService = new UserService(mongoClient);
+
+      const result = await userService.updateUser(
+        {
+          password: "somePassword",
+        },
+        "someEmail"
+      );
+
+      expect(result).toEqual(false);
+    });
+
+    it("should return false if call returns false", async () => {
+      const mongoClient = new MongoClient();
+      mongoClient.getOneByQuery = jest.fn().mockReturnValue({ _id: "someId" });
+      mongoClient.update = jest.fn().mockImplementation(() => {
+        return false;
+      });
+      const userService = new UserService(mongoClient);
+
+      const result = await userService.updateUser(
+        {
+          password: "somePassword",
+        },
+        "someEmail"
+      );
+      expect(result).toEqual(false);
+    });
+  });
+
   describe("getUserDetails", () => {
     it("should return account details if user exists", async () => {
       const first = "someFirstName",
@@ -361,16 +428,16 @@ describe("UserService", () => {
 
       jest.spyOn(bcrypt, "genSalt").mockResolvedValue("someSalt");
       jest.spyOn(bcrypt, "hash").mockResolvedValue("someHash");
-      const postMock = jest.fn();
+      const insertMock = jest.fn();
       const mongoClient = new MongoClient();
-      mongoClient.post = postMock;
+      mongoClient.insert = insertMock;
       const userService = new UserService(mongoClient);
 
-      user.salt = "someSalt";
-      user.password = "someHash";
+      user._salt = "someSalt";
+      user._password = "someHash";
 
       await userService.registerHandler(user);
-      expect(postMock).toHaveBeenCalledWith(USER_TABLE, user);
+      expect(insertMock).toHaveBeenCalledWith(USER_TABLE, user);
     });
   });
 });

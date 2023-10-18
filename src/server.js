@@ -76,6 +76,10 @@ router.get("/reset-users", (req, res) =>
 router.get("/account-details", (req, res) =>
   Authenticator.authenticate(req, res, userController.getUserDetails)
 );
+router.post("/forgot-password", userController.sendForgotPasswordEmail);
+router.post("/update-password", (req, res) =>
+  Authenticator.authenticate(req, res, userController.updatePassword)
+);
 router.post("/register-user", userController.createUser);
 router.post("/verify-user", userController.verifyUser);
 router.post("/verify-token", userController.verifyToken);

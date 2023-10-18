@@ -263,7 +263,7 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      mongoClient.post(USER_TABLE, {
+      mongoClient.insert(USER_TABLE, {
         email: "email",
         password: "password",
       });
@@ -298,7 +298,7 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      mongoClient.post(INTAKE_TABLE, intake);
+      mongoClient.insert(INTAKE_TABLE, intake);
 
       expect(mongoDbMock).toHaveBeenCalledWith({
         _id: "someId",
@@ -331,7 +331,7 @@ describe("MongoClient", () => {
         "someNotes"
       );
 
-      await mongoClient.post(DAYSTAT_TABLE, dailyLog);
+      await mongoClient.insert(DAYSTAT_TABLE, dailyLog);
 
       expect(mongoDbMock).toHaveBeenCalledWith(dailyLog);
     });
@@ -369,7 +369,7 @@ describe("MongoClient", () => {
         "someImageUrl"
       );
 
-      await mongoClient.post(FOOD_TABLE, food);
+      await mongoClient.insert(FOOD_TABLE, food);
 
       expect(mongoDbMock).toHaveBeenCalledWith(food);
       expect(logEvent).toHaveBeenCalledWith(
@@ -391,7 +391,7 @@ describe("MongoClient", () => {
 
       const mongoClient = new MongoClient();
 
-      await mongoClient.patch(INTAKE_TABLE, {
+      await mongoClient.update(INTAKE_TABLE, {
         _id: "someId",
         quantity: 2,
       });
@@ -410,7 +410,7 @@ describe("MongoClient", () => {
       const mongoClient = new MongoClient();
 
       await expect(
-        mongoClient.patch(INTAKE_TABLE, {
+        mongoClient.update(INTAKE_TABLE, {
           _id: "someId",
           quantity: 2,
         })

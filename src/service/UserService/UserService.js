@@ -54,6 +54,30 @@ export default class UserService {
     }
   }
 
+  async updateUser(updateBody, email) {
+    const { hash, salt } = await this.generatePasswordHashAndSalt(
+      updateBody.password
+    );
+    await this.assignPasswordAndSalt(updateBody, hash, salt);
+
+    const existingUser = await this.mongoClient.getOneByQuery(USER_TABLE, {
+      _email: email,
+    });
+
+    if (!existingUser) {
+      return false;
+    } else {
+      updateBody._id = existingUser._id;
+      const result = await this.mongoClient.update(USER_TABLE, updateBody);
+
+      if (result) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
   async verifyUser(loginFormData) {
     const result = await this.mongoClient.getOneByQuery(USER_TABLE, {
       _email: loginFormData.email,
@@ -103,14 +127,22 @@ export default class UserService {
       });
   }
 
+  async generatePasswordHashAndSalt(password) {
+    const salt = await bcrypt.genSalt(parseInt(HASH_SALT_ROUNDS));
+    const hash = await bcrypt.hash(password, salt);
+    return { hash, salt };
+  }
+
+  async assignPasswordAndSalt(user, hash, salt) {
+    user.salt = await salt;
+    user._password = await hash;
+    delete user.password;
+  }
+
   async registerHandler(user) {
-    return await bcrypt.genSalt(parseInt(HASH_SALT_ROUNDS)).then((salt) => {
-      bcrypt.hash(user._password, salt).then(async (hash) => {
-        user.salt = salt;
-        user._password = hash;
-        await this.mongoClient.post(USER_TABLE, user);
-        // TODO: Email Verification
-      });
-    });
+    const { hash, salt } = this.generatePasswordHashAndSalt(user._password);
+    this.assignPasswordAndSalt(user, hash, salt);
+    await this.mongoClient.insert(USER_TABLE, user);
+    // TODO: Email Verification
   }
 }

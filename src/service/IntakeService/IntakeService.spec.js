@@ -136,7 +136,7 @@ describe("IntakeService", () => {
           1
         );
 
-        const { mongoClient, postMock } = setupMongoClient();
+        const { mongoClient, insertMock } = setupMongoClient();
 
         const intakeService = new IntakeService(mongoClient);
 
@@ -146,27 +146,27 @@ describe("IntakeService", () => {
           quantity: 1,
         });
 
-        expect(postMock).toHaveBeenCalledWith(INTAKE_TABLE, expectedIntake);
+        expect(insertMock).toHaveBeenCalledWith(INTAKE_TABLE, expectedIntake);
         expect(insertedEntity).toEqual(expectedIntake);
       });
     });
 
     describe("updateIntake", () => {
       it("should return true if update successful", async () => {
-        const { mongoClient, patchMock } = setupMongoClient();
+        const { mongoClient, updateMock } = setupMongoClient();
 
         const intakeService = new IntakeService(mongoClient);
 
         const response = await intakeService.updateIntake({ quantity: 3 });
 
-        expect(patchMock).toHaveBeenCalledWith(INTAKE_TABLE, { quantity: 3 });
+        expect(updateMock).toHaveBeenCalledWith(INTAKE_TABLE, { quantity: 3 });
         expect(response).toBe(true);
       });
     });
 
     it("should return false if update unsuccessful", async () => {
-      const { mongoClient, patchMock } = setupMongoClient();
-      patchMock.mockImplementation((user) => {
+      const { mongoClient, updateMock } = setupMongoClient();
+      updateMock.mockImplementation((user) => {
         return false;
       });
 
@@ -174,7 +174,7 @@ describe("IntakeService", () => {
 
       const response = await intakeService.updateIntake({ quantity: 3 });
 
-      expect(patchMock).toHaveBeenCalledWith(INTAKE_TABLE, { quantity: 3 });
+      expect(updateMock).toHaveBeenCalledWith(INTAKE_TABLE, { quantity: 3 });
       expect(response).toBe(false);
     });
   });
@@ -333,11 +333,11 @@ describe("IntakeService", () => {
       return true;
     });
 
-    const postMock = jest.fn().mockImplementation((tableName, body) => {
+    const insertMock = jest.fn().mockImplementation((tableName, body) => {
       return true;
     });
 
-    const patchMock = jest.fn().mockImplementation((tableName, body) => {
+    const updateMock = jest.fn().mockImplementation((tableName, body) => {
       return true;
     });
 
@@ -345,8 +345,8 @@ describe("IntakeService", () => {
     mongoClient.getManyByQuery = getManyByQueryMock;
     mongoClient.getOneById = getOneByIdMock;
     mongoClient.delete = deleteMock;
-    mongoClient.post = postMock;
-    mongoClient.patch = patchMock;
+    mongoClient.insert = insertMock;
+    mongoClient.update = updateMock;
 
     return {
       mongoClient,
@@ -354,8 +354,8 @@ describe("IntakeService", () => {
       getOneByIdMock,
       getOneByQueryMock,
       deleteMock,
-      postMock,
-      patchMock,
+      insertMock,
+      updateMock,
     };
   }
 });

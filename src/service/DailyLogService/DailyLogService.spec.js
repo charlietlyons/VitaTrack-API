@@ -24,7 +24,7 @@ describe("DailyLogService", () => {
   });
 
   it("should not prepare the daily log if some user and a daily log for today exist", async () => {
-    const postMock = jest.fn();
+    const insertMock = jest.fn();
 
     const mongoClient = new MongoClient();
     mongoClient.getOneByQuery = jest.fn().mockImplementation((user) => {
@@ -33,16 +33,16 @@ describe("DailyLogService", () => {
     mongoClient.getManyByQuery = jest.fn().mockImplementation((id, today) => {
       return [{}];
     });
-    mongoClient.post = postMock;
+    mongoClient.insert = insertMock;
 
     const dailyLogService = new DailyLogService(mongoClient);
     await dailyLogService.prepareDailyLog("someUser");
 
-    expect(postMock).not.toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
   });
 
   it("should prepare the daily log if some user exists and daily log for today does not", async () => {
-    const postMock = jest.fn();
+    const insertMock = jest.fn();
     const dailyLogEntity = new DailyLog(
       "8",
       new Date().toJSON().slice(0, 10),
@@ -59,26 +59,26 @@ describe("DailyLogService", () => {
     mongoClient.getManyByQuery = jest.fn().mockImplementation((id, today) => {
       return [];
     });
-    mongoClient.post = postMock;
+    mongoClient.insert = insertMock;
 
     const dailyLogService = new DailyLogService(mongoClient);
     await dailyLogService.prepareDailyLog("someUser");
 
-    expect(postMock).toHaveBeenCalledWith(DAYSTAT_TABLE, dailyLogEntity);
+    expect(insertMock).toHaveBeenCalledWith(DAYSTAT_TABLE, dailyLogEntity);
   });
 
   it("should do absolutely nothing if no user", async () => {
-    const postMock = jest.fn();
+    const insertMock = jest.fn();
 
     const mongoClient = new MongoClient();
     mongoClient.getOneByQuery = jest.fn().mockImplementation((user) => {
       return false;
     });
-    mongoClient.post = postMock;
+    mongoClient.insert = insertMock;
 
     const dailyLogService = new DailyLogService(mongoClient);
     await dailyLogService.prepareDailyLog("someUser");
 
-    expect(postMock).not.toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
   });
 });

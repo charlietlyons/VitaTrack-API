@@ -32,7 +32,7 @@ class DailyLogService {
       if (existingDailyLog.length > 0) {
         return existingDailyLog;
       } else {
-        return this.mongoClient.post(DAYSTAT_TABLE, dailyLogInitialPayload);
+        return this.mongoClient.insert(DAYSTAT_TABLE, dailyLogInitialPayload);
       }
     }
   };

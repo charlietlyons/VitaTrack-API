@@ -64,7 +64,7 @@ export default class MongoClient {
     return result;
   }
 
-  async post(tableName, body) {
+  async insert(tableName, body) {
     const result = await this.client
       .db(DB_NAME)
       .collection(tableName)
@@ -72,7 +72,7 @@ export default class MongoClient {
     logEvent(`Inserted into ${tableName} with the id: ${result.insertedId}`);
   }
 
-  async patch(tableName, body) {
+  async update(tableName, body) {
     const result = await this.client
       .db(DB_NAME)
       .collection(tableName)

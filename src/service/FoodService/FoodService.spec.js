@@ -19,7 +19,7 @@ jest.mock("crypto", () => {
 describe("Food Service", () => {
   describe("addFood", () => {
     it("should insert food via mongoClient", async () => {
-      const postMock = jest.fn();
+      const insertMock = jest.fn();
       const foodEntity = new Food(
         "8",
         "someUserId",
@@ -36,17 +36,17 @@ describe("Food Service", () => {
       );
       const mongoInstance = new MongoClient();
 
-      mongoInstance.post = postMock;
+      mongoInstance.insert = insertMock;
 
       const foodService = new FoodService(mongoInstance);
 
       await foodService.addFood(foodEntity);
 
-      expect(postMock).toHaveBeenCalledWith(FOOD_TABLE, foodEntity);
+      expect(insertMock).toHaveBeenCalledWith(FOOD_TABLE, foodEntity);
     });
 
     it("should set default access to private", async () => {
-      const postMock = jest.fn();
+      const insertMock = jest.fn();
       const foodEntity = new Food(
         "8",
         "someUserId",
@@ -57,13 +57,12 @@ describe("Food Service", () => {
         10,
         100,
         "g",
-        "addd",
         "some food",
         "url.com"
       );
       const mongoInstance = new MongoClient();
 
-      mongoInstance.post = postMock;
+      mongoInstance.insert = insertMock;
 
       const foodService = new FoodService(mongoInstance);
 
@@ -71,7 +70,7 @@ describe("Food Service", () => {
 
       foodEntity.access = PRIVATE_ACCESS;
 
-      expect(postMock).toHaveBeenCalledWith(FOOD_TABLE, foodEntity);
+      expect(insertMock).toHaveBeenCalledWith(FOOD_TABLE, foodEntity);
     });
   });
 
@@ -121,17 +120,17 @@ describe("Food Service", () => {
         imageUrl: "url.com",
       };
       const mongoClient = new MongoClient();
-      const patchMock = jest.fn().mockImplementation(() => {
+      const updateMock = jest.fn().mockImplementation(() => {
         return true;
       });
 
-      mongoClient.patch = patchMock;
+      mongoClient.update = updateMock;
 
       const foodService = new FoodService(mongoClient);
 
       await foodService.updateFood(payload);
 
-      expect(patchMock).toBeCalledWith(FOOD_TABLE, payload);
+      expect(updateMock).toBeCalledWith(FOOD_TABLE, payload);
     });
   });
 

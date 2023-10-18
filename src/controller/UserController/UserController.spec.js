@@ -160,6 +160,44 @@ describe("UserController", () => {
       });
     });
 
+    describe("sendForgotPasswordEmail", () => {
+      it("should be true", () => {
+        expect(true).toBe(true);
+      });
+    });
+
+    describe("updatePassword", () => {
+      it("should send 200 if update result is true", async () => {
+        userService.updateUser = jest.fn((body) => {
+          return true;
+        });
+
+        await userController.updatePassword(req, res, { email: "someEmail" });
+        expect(statusSpy).toHaveBeenCalledWith(200);
+        expect(sendSpy).toHaveBeenCalled();
+      });
+
+      it("should send 500 if update result is false", async () => {
+        userService.updateUser = jest.fn((body) => {
+          return false;
+        });
+
+        await userController.updatePassword(req, res, { email: "someEmail" });
+        expect(statusSpy).toHaveBeenCalledWith(500);
+        expect(sendSpy).toHaveBeenCalled();
+      });
+
+      it("should send 500 if error thrown", async () => {
+        userService.updateUser = jest.fn((body) => {
+          throw Error("no");
+        });
+
+        await userController.updatePassword(req, res);
+        expect(statusSpy).toHaveBeenCalledWith(500);
+        expect(sendSpy).toHaveBeenCalled();
+      });
+    });
+
     describe("verifyUser", () => {
       it("should return token user is verified and prepare log is successful", async () => {
         userService.verifyUser = jest.fn((body) => {
@@ -177,6 +215,22 @@ describe("UserController", () => {
           JSON.stringify({ token: "some token" })
         );
         expect(failHandlerSpy).not.toHaveBeenCalled();
+      });
+
+      it("should send 403 if user is not verified", async () => {
+        userService.verifyUser = jest.fn((body) => {
+          return null;
+        });
+
+        await userController.verifyUser(req, res);
+
+        expect(successHandlerSpy).not.toHaveBeenCalled();
+        expect(failHandlerSpy).toHaveBeenCalledWith(
+          req,
+          res,
+          Error("Could not verify user"),
+          403
+        );
       });
 
       it("should send 500 if user service throws an error", () => {

@@ -23,7 +23,7 @@ class FoodService {
       food.imageUrl
     );
 
-    await this.mongoClient.post(FOOD_TABLE, foodEntity);
+    await this.mongoClient.insert(FOOD_TABLE, foodEntity);
   }
 
   async getFoodOptions(userId) {
@@ -35,7 +35,7 @@ class FoodService {
   }
 
   async updateFood(foodData) {
-    await this.mongoClient.patch(FOOD_TABLE, foodData);
+    await this.mongoClient.update(FOOD_TABLE, foodData);
   }
 
   async deleteFood(foodId) {
